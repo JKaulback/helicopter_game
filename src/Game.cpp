@@ -1,4 +1,5 @@
 #include "Game.h"
+#include <ctime>
 
 Game::Game() : gameOver(false), victory(false) {}
 
@@ -8,6 +9,7 @@ Game::~Game() {
 }
 
 void Game::Init() {
+    SetRandomSeed((unsigned int)time(NULL));
     InitWindow(Constants::ScreenWidth, Constants::ScreenHeight, "Helicopter Game");
     SetTargetFPS(Constants::TargetFPS);
     
@@ -31,6 +33,7 @@ void Game::Update() {
             gameOver = false;
             victory = false;
             helicopter.Reset({100, 300});
+            level.Init();
         }
         return;
     }
