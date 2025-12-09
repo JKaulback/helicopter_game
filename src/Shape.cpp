@@ -34,6 +34,16 @@ void Shape::Draw(Vector2 offset) const {
                 color
             );
             break;
+        case RING:
+            float radius = rect.width / 2.0f;
+            DrawRing(
+                {posX + radius, posY + radius}, 
+                radius - param, // Inner radius
+                radius,         // Outer radius
+                0, 360, 0,      // Start/End angle, segments
+                color
+            );
+            break;
     }
 
     if (rotation != 0.0f) {

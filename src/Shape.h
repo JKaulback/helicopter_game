@@ -4,7 +4,8 @@
 enum ShapeType {
     RECTANGLE,
     ELLIPSE,
-    TRIANGLE
+    TRIANGLE,
+    RING
 };
 
 enum ShapeID {
@@ -19,6 +20,7 @@ struct Shape {
     Color color;
     ShapeID id = NONE;
     float rotation = 0.0f;
+    float param = 0.0f; // For RING: thickness
 
     void Draw(Vector2 offset) const;
 };

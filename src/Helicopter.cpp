@@ -13,13 +13,11 @@ static const std::vector<Shape> LeftShapes = {
     // Tail Boom (flipped)
     {RECTANGLE, {(float)HELI_WIDTH - 5, 5, 25, 10}, DARKBLUE, NONE, 0.0f},
     
-    // Tail Structure (Correct Draw Order: Fin -> Duct -> Rotor)
-    // Swept Fin (Background) - Shrunk & Moved
-    {TRIANGLE, {(float)HELI_WIDTH + 14, -15, 12, 20}, DARKBLUE, NONE, 30.0f},
-    // Duct (Middle) - Shrunk
-    {ELLIPSE, {(float)HELI_WIDTH + 15, -2, 10, 12}, DARKGRAY, NONE, 0.0f},
-    // Tail Rotor (Foreground) - Inside duct
-    {RECTANGLE, {(float)HELI_WIDTH + 18, -1, 4, 10}, BLACK, TAIL_ROTOR, 0.0f},
+    // Tail Structure
+    // Blue Ring (Duct)
+    {RING, {(float)HELI_WIDTH + 15, 0, 10, 10}, DARKBLUE, NONE, 0.0f, 2.0f},
+    // Tail Rotor (Foreground)
+    {RECTANGLE, {(float)HELI_WIDTH + 18.5f, 1, 3, 8}, BLACK, TAIL_ROTOR, 0.0f},
 
     // Main Rotor Blade (same relative pos)
     {RECTANGLE, {5, -5, 30, 5}, BLACK, MAIN_ROTOR, 0.0f},
@@ -41,13 +39,11 @@ static const std::vector<Shape> RightShapes = {
     // Tail Boom
     {RECTANGLE, {-20, 5, 25, 10}, DARKBLUE, NONE, 0.0f},
 
-    // Tail Structure (Correct Draw Order: Fin -> Duct -> Rotor)
-    // Swept Fin (Background)
-    {TRIANGLE, {-26, -15, 12, 20}, DARKBLUE, NONE, -30.0f},
-    // Duct (Middle)
-    {ELLIPSE, {-25, -2, 10, 12}, DARKGRAY, NONE, 0.0f},
+    // Tail Structure
+    // Blue Ring (Duct)
+    {RING, {-25, 0, 10, 10}, DARKBLUE, NONE, 0.0f, 2.0f},
     // Tail Rotor (Foreground)
-    {RECTANGLE, {-22, -1, 4, 10}, BLACK, TAIL_ROTOR, 0.0f},
+    {RECTANGLE, {-21.5f, 1, 3, 8}, BLACK, TAIL_ROTOR, 0.0f},
 
     // Main Rotor Blade
     {RECTANGLE, {5, -5, 30, 5}, BLACK, MAIN_ROTOR, 0.0f},
