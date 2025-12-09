@@ -12,16 +12,42 @@ Game::~Game() {
 void Game::Init() {
     SetRandomSeed((unsigned int)time(NULL));
     InitWindow(Constants::ScreenWidth, Constants::ScreenHeight, "Helicopter Game");
+    InitAudioDevice();
     SetTargetFPS(Constants::TargetFPS);
+
+    // Load Audio
+    // NOTE: These files are placeholders. The game will log warnings if not found but continue running.
+    shootSound = LoadSound("assets/shoot.wav");
+    explodeSound = LoadSound("assets/explode.wav");
+    bgm = LoadMusicStream("assets/music.mp3");
+    
+    bgm.looping = true;
+    PlayMusicStream(bgm);
     
     // Initialize game objects here
     helicopter.Init({100, 330}); // Start position
     level.Init();
 
     missiles.clear();
+    explosions.clear();
+    projectiles.clear();
     spawnTimer = 0.0f;
+    
+    currentAmmo = maxAmmo;
+    ammoRechargeTimer = 0.0f;
 
     gameFont = LoadFont("assets/arial.ttf");
+    gameOver = false;
+    victory = false;
+}
+
+void Game::Shutdown() {
+    UnloadSound(shootSound);
+    UnloadSound(explodeSound);
+    UnloadMusicStream(bgm);
+    CloseAudioDevice();
+    UnloadFont(gameFont);
+    CloseWindow();
 }
 
 void Game::Run() {
@@ -29,9 +55,12 @@ void Game::Run() {
         Update();
         Draw();
     }
+    Shutdown();
 }
 
 void Game::Update() {
+    UpdateMusicStream(bgm);
+
     if (gameOver) {
         if (IsKeyPressed(KEY_R)) {
             gameOver = false;
@@ -39,9 +68,12 @@ void Game::Update() {
             level.Init();
             missiles.clear();
             spawnTimer = 0.0f;
+            currentAmmo = maxAmmo;
         }
         return;
     }
+
+    if (victory) return;
 
     helicopter.Update();
     if (helicopter.HasStarted()) {
@@ -72,6 +104,7 @@ void Game::Update() {
         // Spawn at nose (Width 40, Height 20 -> Center Right ~ 40, 10)
         projectiles.push_back({ {heliPos.x + 40, heliPos.y + 10}, {12.0f, 0.0f} });
         currentAmmo--;
+        PlaySound(shootSound);
     }
     
     // Ammo Recharge
@@ -96,6 +129,7 @@ void Game::Update() {
         if (level.CheckCollision(p.GetRect())) {
             p.active = false;
             explosions.push_back({ {p.position.x, p.position.y}, 0.5f });
+            PlaySound(explodeSound);
         }
         
         // Out of bounds cleanup
@@ -114,6 +148,7 @@ void Game::Update() {
         if (m->IsActive() && level.CheckCollision(m->GetRect())) {
             m->Destroy();
             explosions.push_back({ {m->GetRect().x + 15, m->GetRect().y + 5}, 0.5f });
+            PlaySound(explodeSound);
         }
     }
 
@@ -134,6 +169,7 @@ void Game::Update() {
                 // Explosion at midpoint
                 Vector2 mid = { (m->GetRect().x + p.position.x)/2, (m->GetRect().y + p.position.y)/2 };
                 explosions.push_back({ mid, 0.5f });
+                PlaySound(explodeSound);
                 break; // Missile handled, move to next missile
             }
         }

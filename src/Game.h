@@ -7,7 +7,6 @@
 #include <vector>
 #include <memory>
 
-
 class Game {
 public:
     Game();
@@ -15,6 +14,7 @@ public:
 
     void Init();
     void Run();
+    void Shutdown();
 
 private:
     void Update();
@@ -23,6 +23,11 @@ private:
     Helicopter helicopter;
     Level level;
     Font gameFont;
+
+    // Audio
+    Sound shootSound;
+    Sound explodeSound;
+    Music bgm;
     
     std::vector<std::unique_ptr<Missile>> missiles;
     
