@@ -11,6 +11,7 @@ public:
     void Draw();
     Rectangle GetRect() const;
     bool IsActive() const { return active; }
+    void Destroy() { active = false; }
 
 protected:
     Vector2 position;

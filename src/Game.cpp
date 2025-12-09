@@ -66,27 +66,96 @@ void Game::Update() {
         }
     }
 
-    // Update Missiles
-    for (auto it = missiles.begin(); it != missiles.end(); ) {
-        if ((*it)->IsActive()) {
-            (*it)->Update(helicopter.GetPosition());
-            
-            // Check for collision with level (terrain)
-            if (level.CheckCollision((*it)->GetRect())) {
-                 // Explode!
-                 explosions.push_back({ {(*it)->GetRect().x + 15, (*it)->GetRect().y + 5}, 0.5f });
-                 it = missiles.erase(it); // Remove missile
-                 continue; 
-            }
+    // Helicopter Input - Shooting
+    if (IsKeyPressed(KEY_SPACE)) {
+        Vector2 heliPos = helicopter.GetPosition();
+        // Spawn at nose (Width 40, Height 20 -> Center Right ~ 40, 10)
+        projectiles.push_back({ {heliPos.x + 40, heliPos.y + 10}, {12.0f, 0.0f} });
+    }
 
-            // Check for collision with player
-            if (CheckCollisionRecs(helicopter.GetRect(), (*it)->GetRect())) {
-                gameOver = true;
-            }
+    // --- PHASE 1: Projectile Physics & Wall Collision ---
+    for (auto& p : projectiles) {
+        if (!p.active) continue;
 
-            ++it;
+        // Physics
+        p.velocity.y += 0.08f; 
+        p.position.x += p.velocity.x;
+        p.position.y += p.velocity.y;
+
+        // Wall Collision
+        if (level.CheckCollision(p.GetRect())) {
+            p.active = false;
+            explosions.push_back({ {p.position.x, p.position.y}, 0.5f });
+        }
+        
+        // Out of bounds cleanup
+        if (p.position.x > Constants::ScreenWidth + 50 || p.position.y > Constants::ScreenHeight + 50) {
+            p.active = false;
+        }
+    }
+
+    // --- PHASE 2: Missile Physics & Wall Collision ---
+    for (auto& m : missiles) {
+        if (!m->IsActive()) continue;
+
+        m->Update(helicopter.GetPosition());
+
+        // Wall Collision
+        if (m->IsActive() && level.CheckCollision(m->GetRect())) {
+            m->Destroy();
+            explosions.push_back({ {m->GetRect().x + 15, m->GetRect().y + 5}, 0.5f });
+        }
+    }
+
+    // --- PHASE 3: Entity-Entity Collisions ---
+    
+    // Missile vs Projectile
+    for (auto& m : missiles) {
+        if (!m->IsActive()) continue;
+
+        for (auto& p : projectiles) {
+            if (!p.active) continue;
+
+            if (CheckCollisionRecs(m->GetRect(), p.GetRect())) {
+                // Hit!
+                m->Destroy();
+                p.active = false;
+                
+                // Explosion at midpoint
+                Vector2 mid = { (m->GetRect().x + p.position.x)/2, (m->GetRect().y + p.position.y)/2 };
+                explosions.push_back({ mid, 0.5f });
+                break; // Missile handled, move to next missile
+            }
+        }
+    }
+
+    // Missile vs Player
+    for (auto& m : missiles) {
+        if (!m->IsActive()) continue;
+        if (CheckCollisionRecs(helicopter.GetRect(), m->GetRect())) {
+            gameOver = true;
+        }
+    }
+
+    // --- PHASE 4: Cleanup ---
+    
+    // Remove inactive projectiles
+    auto pIt = projectiles.begin();
+    while (pIt != projectiles.end()) {
+        if (!pIt->active) {
+            pIt = projectiles.erase(pIt);
         } else {
-            it = missiles.erase(it);
+            ++pIt;
+        }
+    }
+
+    // Remove inactive missiles
+    auto mIt = missiles.begin();
+    while (mIt != missiles.end()) {
+        if (!(*mIt)->IsActive()) {
+            mIt = missiles.erase(mIt);
+        } else {
+            ++mIt;
         }
     }
     
@@ -116,6 +185,10 @@ void Game::Draw() {
         missile->Draw();
     }
 
+    for (const auto& p : projectiles) {
+        DrawCircleV(p.position, p.radius, YELLOW);
+    }
+    
     // Draw Explosions
     for (const auto& e : explosions) {
         float radius = (0.5f - e.timer) * 80.0f; // Expand

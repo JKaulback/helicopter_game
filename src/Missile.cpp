@@ -56,7 +56,8 @@ void Missile::Draw() {
 }
 
 Rectangle Missile::GetRect() const {
-    return {position.x, position.y, (float)width, (float)height};
+    // Include the nose cap (10px) in the collision box
+    return {position.x, position.y, (float)width + 10.0f, (float)height};
 }
 
 // --- Oscillator Missile ---

@@ -32,6 +32,15 @@ private:
     };
     std::vector<Explosion> explosions;
 
+    struct Projectile {
+        Vector2 position;
+        Vector2 velocity;
+        bool active = true;
+        float radius = 5.0f;
+        Rectangle GetRect() const { return {position.x - radius, position.y - radius, radius*2, radius*2}; }
+    };
+    std::vector<Projectile> projectiles;
+
     float spawnTimer = 0.0f;
 
     bool gameOver;
