@@ -67,10 +67,20 @@ void Game::Update() {
     }
 
     // Helicopter Input - Shooting
-    if (IsKeyPressed(KEY_SPACE)) {
+    if (IsKeyPressed(KEY_SPACE) && currentAmmo > 0) {
         Vector2 heliPos = helicopter.GetPosition();
         // Spawn at nose (Width 40, Height 20 -> Center Right ~ 40, 10)
         projectiles.push_back({ {heliPos.x + 40, heliPos.y + 10}, {12.0f, 0.0f} });
+        currentAmmo--;
+    }
+    
+    // Ammo Recharge
+    if (currentAmmo < maxAmmo) {
+        ammoRechargeTimer += GetFrameTime();
+        if (ammoRechargeTimer >= ammoRechargeDelay) {
+            currentAmmo++;
+            ammoRechargeTimer = 0.0f;
+        }
     }
 
     // --- PHASE 1: Projectile Physics & Wall Collision ---
@@ -199,10 +209,20 @@ void Game::Draw() {
 
     helicopter.Draw();
 
+    // Draw Control Panel
+    DrawRectangle(0, 0, Constants::ScreenWidth, Constants::ControlPanelHeight, DARKGRAY);
+    DrawLine(0, Constants::ControlPanelHeight, Constants::ScreenWidth, Constants::ControlPanelHeight, WHITE);
+
     // Draw Score
     char scoreText[50];
     sprintf(scoreText, "Distance: %d", (int)level.GetDistance());
-    DrawTextEx(gameFont, scoreText, Vector2{10.0f, 10.0f}, 20, 1, BLACK);
+    DrawTextEx(gameFont, scoreText, Vector2{20.0f, 15.0f}, 20, 1, WHITE);
+
+    // Draw Ammo
+    char ammoText[50];
+    sprintf(ammoText, "Ammo: %d / %d", currentAmmo, maxAmmo);
+    Color ammoColor = (currentAmmo == 0) ? RED : GREEN;
+    DrawTextEx(gameFont, ammoText, Vector2{200.0f, 15.0f}, 20, 1, ammoColor);
 
     if (gameOver) {
         DrawRectangle(0, 0, Constants::ScreenWidth, Constants::ScreenHeight, Fade(BLACK, 0.5f));

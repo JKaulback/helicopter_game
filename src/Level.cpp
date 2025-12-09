@@ -5,7 +5,7 @@
 void Level::Init() {
     obstacles.clear();
     distanceTraveled = 0.0f;
-    lastY = Constants::ScreenHeight / 2.0f;
+    lastY = (Constants::ScreenHeight + Constants::ControlPanelHeight) / 2.0f;
     targetY = lastY;
     stepsToTarget = 0;
     currentGapHeight = 300.0f; // Start wide
@@ -15,10 +15,10 @@ void Level::Init() {
 
     // Generate safe zone (first 500 pixels)
     for (int x = 0; x < 500; x += Constants::TerrainStep) {
-        int ceilingY = 50; 
+        int ceilingY = Constants::ControlPanelHeight + 50; 
         int floorY = 400; 
 
-        obstacles.push_back({(float)x, 0, (float)Constants::TerrainStep, (float)ceilingY});
+        obstacles.push_back({(float)x, (float)Constants::ControlPanelHeight, (float)Constants::TerrainStep, (float)(ceilingY - Constants::ControlPanelHeight)});
         obstacles.push_back({(float)x, (float)floorY, (float)Constants::TerrainStep, (float)(Constants::ScreenHeight - floorY)});
     }
 
@@ -64,14 +64,14 @@ void Level::GenerateChunk(int startX, int width) {
         // Target Logic
         stepsToTarget--;
         if (stepsToTarget <= 0) {
-            // Pick new target based on CURRENT gap height
-            int minSafe = (int)(currentGapHeight / 2.0f) + 50;
+            // Pick new target based on CURRENT gap height, respecting Control Panel
+            int minSafe = Constants::ControlPanelHeight + (int)(currentGapHeight / 2.0f) + 50;
             int maxSafe = Constants::ScreenHeight - (int)(currentGapHeight / 2.0f) - 50;
             
             // Ensure bounds are valid (avoid crossing)
             if (minSafe > maxSafe) {
-                minSafe = Constants::ScreenHeight / 2 - 20;
-                maxSafe = Constants::ScreenHeight / 2 + 20;
+                minSafe = (Constants::ScreenHeight + Constants::ControlPanelHeight) / 2 - 20;
+                maxSafe = (Constants::ScreenHeight + Constants::ControlPanelHeight) / 2 + 20;
             }
 
             targetY = (float)GetRandomValue(minSafe, maxSafe);
@@ -95,7 +95,7 @@ void Level::GenerateChunk(int startX, int width) {
         lastY += move;
         
         // Clamp
-        float minH = currentGapHeight / 2.0f + 20.0f;
+        float minH = Constants::ControlPanelHeight + currentGapHeight / 2.0f + 20.0f;
         float maxH = Constants::ScreenHeight - currentGapHeight / 2.0f - 20.0f;
         
         if (lastY < minH) lastY = minH;
@@ -104,8 +104,8 @@ void Level::GenerateChunk(int startX, int width) {
         int ceilingY = (int)(lastY - currentGapHeight / 2.0f);
         int floorY = (int)(lastY + currentGapHeight / 2.0f);
 
-        if (ceilingY > 0) {
-            obstacles.push_back({(float)x, 0, (float)Constants::TerrainStep, (float)ceilingY});
+        if (ceilingY > Constants::ControlPanelHeight) {
+            obstacles.push_back({(float)x, (float)Constants::ControlPanelHeight, (float)Constants::TerrainStep, (float)(ceilingY - Constants::ControlPanelHeight)});
         }
         if (floorY < Constants::ScreenHeight) {
             obstacles.push_back({(float)x, (float)floorY, (float)Constants::TerrainStep, (float)(Constants::ScreenHeight - floorY)});
@@ -121,13 +121,16 @@ void Level::Draw() {
 }
 
 bool Level::CheckCollision(Rectangle playerRect) {
+    // Check Control Panel Collision
+    if (playerRect.y < Constants::ControlPanelHeight) return true;
+
     for (const auto& obs : obstacles) {
         if (CheckCollisionRecs(playerRect, obs)) {
             return true;
         }
     }
     // Also check screen bounds if no obstacles generated there (e.g. initial gap)
-    if (playerRect.y < 0 || playerRect.y + playerRect.height > Constants::ScreenHeight) return true;
+    if (playerRect.y + playerRect.height > Constants::ScreenHeight) return true;
     return false;
 }
 
