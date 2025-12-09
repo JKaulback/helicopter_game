@@ -30,12 +30,18 @@ class OscillatorMissile : public Missile {
 public:
     OscillatorMissile(Vector2 startPos);
     void Update(Vector2 playerPos) override;
+private:
+    float amplitude;
+    float frequency;
 };
 
 class LooperMissile : public Missile {
 public:
     LooperMissile(Vector2 startPos);
     void Update(Vector2 playerPos) override;
+private:
+    float loopRadius;
+    float loopSpeed;
 };
 
 class SeekerMissile : public Missile {

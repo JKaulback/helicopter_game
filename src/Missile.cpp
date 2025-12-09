@@ -60,7 +60,10 @@ Rectangle Missile::GetRect() const {
 }
 
 // --- Oscillator Missile ---
-OscillatorMissile::OscillatorMissile(Vector2 startPos) : Missile(startPos, RED) {}
+OscillatorMissile::OscillatorMissile(Vector2 startPos) : Missile(startPos, RED) {
+    amplitude = (float)GetRandomValue(40, 90);
+    frequency = (float)GetRandomValue(20, 50) / 10.0f;
+}
 
 void OscillatorMissile::Update(Vector2 playerPos) {
     Vector2 oldPos = position;
@@ -71,7 +74,7 @@ void OscillatorMissile::Update(Vector2 playerPos) {
     position.x -= speed;
     
     // Sine wave motion
-    float wave = sinf(timeAlive * 3.0f) * 80.0f;
+    float wave = sinf(timeAlive * frequency) * amplitude;
     position.y = startPos.y + wave;
 
     // Rotation
@@ -80,8 +83,13 @@ void OscillatorMissile::Update(Vector2 playerPos) {
     rotation = atan2f(dy, dx) * (180.0f / PI);
 }
 
-// --- Looper Missile ---
-LooperMissile::LooperMissile(Vector2 startPos) : Missile(startPos, PURPLE) {}
+// --- LooperMissile ---
+LooperMissile::LooperMissile(Vector2 startPos) : Missile(startPos, PURPLE) {
+    loopRadius = (float)GetRandomValue(40, 70);
+    loopSpeed = (float)GetRandomValue(50, 80) / 10.0f;
+    // 50% chance to flip loop direction
+    if (GetRandomValue(0, 1) == 0) loopSpeed *= -1;
+}
 
 void LooperMissile::Update(Vector2 playerPos) {
     Vector2 oldPos = position;
@@ -90,35 +98,24 @@ void LooperMissile::Update(Vector2 playerPos) {
     if (!active) return;
 
     // To loop back, the circular velocity must exceed linear velocity.
-    // Linear speed = speed * 60 px/sec = 300.
-    // Circular speed = Radius * AngularVelocity.
-    // Radius = 60.
-    // We need 60 * w > 300 => w > 5. 
-    // Let's use w = 6.0.
     
     // Calculate moving center of the loop
     // Note: timeAlive is incremented by 1/60 per frame.
     // So speed * 60 * timeAlive gives total linear pixel displacement.
     float centerX = startPos.x - (speed * 60.0f * timeAlive);
     
-    float radius = 60.0f;
-    float w = 6.0f; 
+    float radius = loopRadius;
+    float w = loopSpeed; 
     float angle = timeAlive * w; // Radians
 
     // Circular motion
-    position.x = centerX + cosf(angle) * radius;
-    // We need to subtract radius from Y initially if we want to start AT startPos?
-    // At t=0, x = start + R, y = start.
-    // This starts "in front" of the spawn point by R.
-    // To start AT spawn:
-    // x = center + R * cos(angle + PI) ? -> -R.
-    // x = (start + R) - speed*t + R*cos...
-    // Let's just stick to the simple relative orbit. It jumping R pixels at spawn is acceptable or I can offset center.
-    // Let's offset center so it starts at startPos.
-    // at t=0: x = centerX + R. We want x = startPos.x.
-    // So centerX_0 = startPos.x - R.
     
     // Adjusted Center
+    // If loopSpeed is negative, we need to adjust phase or center offset logic if we want consistency?
+    // Actually, simple offset (-radius) works for positive speed starting at 0 angle (right side of circle).
+    // If speed is negative, it starts at 0 and goes negative angle (counter-clockwise).
+    // cos(0) = 1. x = center + R. So center = start - R. Same logic.
+    
     centerX -= radius; 
     position.x = centerX + cosf(angle) * radius;
     
