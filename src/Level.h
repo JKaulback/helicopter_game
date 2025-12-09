@@ -9,6 +9,7 @@ public:
     void Draw();
     bool CheckCollision(Rectangle playerRect);
     float GetDistance() const { return distanceTraveled; }
+    float GetCurrentGapCenter() const { return lastY; }
 
 private:
     std::deque<Rectangle> obstacles;

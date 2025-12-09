@@ -18,6 +18,9 @@ void Game::Init() {
     helicopter.Init({100, 330}); // Start position
     level.Init();
 
+    missiles.clear();
+    spawnTimer = 0.0f;
+
     gameFont = LoadFont("assets/arial.ttf");
 }
 
@@ -34,6 +37,8 @@ void Game::Update() {
             gameOver = false;
             helicopter.Reset({100, 330});
             level.Init();
+            missiles.clear();
+            spawnTimer = 0.0f;
         }
         return;
     }
@@ -41,11 +46,49 @@ void Game::Update() {
     helicopter.Update();
     if (helicopter.HasStarted()) {
         level.Update(); // Scroll terrain
+        
+        // Spawn Missiles
+        spawnTimer += GetFrameTime();
+        if (spawnTimer > 3.0f) { // Spawn every 3 seconds for now
+            spawnTimer = 0.0f;
+            
+            int r = GetRandomValue(0, 2);
+            float targetY = level.GetCurrentGapCenter();
+            Vector2 spawnPos = {(float)Constants::ScreenWidth + 50.0f, targetY};
+
+            if (r == 0) {
+                 missiles.push_back(std::make_unique<OscillatorMissile>(spawnPos));
+            } else if (r == 1) {
+                 missiles.push_back(std::make_unique<LooperMissile>(spawnPos));
+            } else {
+                 missiles.push_back(std::make_unique<SeekerMissile>(spawnPos));
+            }
+        }
+    }
+
+    // Update Missiles
+    for (auto& missile : missiles) {
+        missile->Update(helicopter.GetPosition()); 
+    }
+    
+    // Clean up inactive missiles
+    for (auto it = missiles.begin(); it != missiles.end(); ) {
+        if (!(*it)->IsActive()) {
+            it = missiles.erase(it);
+        } else {
+            ++it;
+        }
     }
     
     // Check collisions
     if (level.CheckCollision(helicopter.GetRect())) {
         gameOver = true;
+    }
+    
+    for (const auto& missile : missiles) {
+        if (CheckCollisionRecs(helicopter.GetRect(), missile->GetRect())) {
+            gameOver = true;
+        }
     }
 }
 
@@ -54,21 +97,26 @@ void Game::Draw() {
     ClearBackground(RAYWHITE);
 
     level.Draw();
+    
+    for (auto& missile : missiles) {
+        missile->Draw();
+    }
+
     helicopter.Draw();
 
     // Draw Score
     char scoreText[50];
     sprintf(scoreText, "Distance: %d", (int)level.GetDistance());
-    DrawTextEx(gameFont, scoreText, {10, 10}, 20, 1, BLACK);
+    DrawTextEx(gameFont, scoreText, Vector2{10.0f, 10.0f}, 20, 1, BLACK);
 
     if (gameOver) {
         DrawRectangle(0, 0, Constants::ScreenWidth, Constants::ScreenHeight, Fade(BLACK, 0.5f));
         Vector2 textMeasure = MeasureTextEx(gameFont, "GAME OVER", 40, 2);
-        DrawTextEx(gameFont, "GAME OVER", {Constants::ScreenWidth/2 - textMeasure.x/2, Constants::ScreenHeight/2 - 20}, 40, 2, RED);
+        DrawTextEx(gameFont, "GAME OVER", Vector2{(float)Constants::ScreenWidth/2.0f - textMeasure.x/2.0f, (float)Constants::ScreenHeight/2.0f - 20.0f}, 40, 2, RED);
         
         Vector2 subTextMeasure = MeasureTextEx(gameFont, "Press 'R' to Restart", 20, 1);
-        DrawTextEx(gameFont, "Press 'R' to Restart", {Constants::ScreenWidth/2 - subTextMeasure.x/2, Constants::ScreenHeight/2 + 30}, 20, 1, DARKGRAY);
+        DrawTextEx(gameFont, "Press 'R' to Restart", Vector2{(float)Constants::ScreenWidth/2.0f - subTextMeasure.x/2.0f, (float)Constants::ScreenHeight/2.0f + 30.0f}, 20, 1, DARKGRAY);
     }
-
+    
     EndDrawing();
 }

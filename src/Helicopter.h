@@ -11,6 +11,7 @@ public:
     void Reset(Vector2 startPos);
     Rectangle GetRect() const;
     bool HasStarted() const { return hasStarted; }
+    Vector2 GetPosition() const { return position; }
 
 private:
     Vector2 position;
