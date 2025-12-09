@@ -14,7 +14,12 @@ private:
     std::deque<Rectangle> obstacles;
     Rectangle startPad;
     float distanceTraveled = 0.0f;
-    int lastY = 250; 
+    float lastY = 250.0f; 
     
+    float targetY = 250.0f;
+    int stepsToTarget = 0;
+    
+    float currentGapHeight = 300.0f;
+
     void GenerateChunk(int startX, int width);
 };

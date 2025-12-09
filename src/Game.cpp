@@ -32,7 +32,7 @@ void Game::Update() {
     if (gameOver) {
         if (IsKeyPressed(KEY_R)) {
             gameOver = false;
-            helicopter.Reset({100, 300});
+            helicopter.Reset({100, 330});
             level.Init();
         }
         return;

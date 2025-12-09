@@ -1,27 +1,28 @@
 #include "Level.h"
 #include "Constants.h"
+#include <cmath>
 
 void Level::Init() {
     obstacles.clear();
     distanceTraveled = 0.0f;
-    lastY = Constants::ScreenHeight / 2;
+    lastY = Constants::ScreenHeight / 2.0f;
+    targetY = lastY;
+    stepsToTarget = 0;
+    currentGapHeight = 300.0f; // Start wide
 
     // Initialize Start Pad
     startPad = {50, 350, 100, 20};
 
     // Generate safe zone (first 500 pixels)
-    // We manually add floor and ceiling to create an open tunnel
     for (int x = 0; x < 500; x += Constants::TerrainStep) {
         int ceilingY = 50; 
-        int floorY = 400; // Leave plenty of room for pad at 350
+        int floorY = 400; 
 
-        // Ceiling
         obstacles.push_back({(float)x, 0, (float)Constants::TerrainStep, (float)ceilingY});
-        // Floor
         obstacles.push_back({(float)x, (float)floorY, (float)Constants::TerrainStep, (float)(Constants::ScreenHeight - floorY)});
     }
 
-    // Generate initial terrain to fill the rest of the screen plus buffer
+    // Generate initial terrain
     GenerateChunk(500, Constants::ScreenWidth + 100 - 500);
 }
 
@@ -51,23 +52,57 @@ void Level::Update() {
     if (rightEdge < Constants::ScreenWidth + 50) {
         GenerateChunk((int)rightEdge, 100);
     }
-
 }
 
 void Level::GenerateChunk(int startX, int width) {
     for (int x = startX; x < startX + width; x += Constants::TerrainStep) {
-        // Random walk
-        lastY += GetRandomValue(-5, 5);
+        
+        // Narrow the gap
+        currentGapHeight -= 0.05f; // Shrink slowly
+        if (currentGapHeight < 100.0f) currentGapHeight = 100.0f;
+
+        // Target Logic
+        stepsToTarget--;
+        if (stepsToTarget <= 0) {
+            // Pick new target based on CURRENT gap height
+            int minSafe = (int)(currentGapHeight / 2.0f) + 50;
+            int maxSafe = Constants::ScreenHeight - (int)(currentGapHeight / 2.0f) - 50;
+            
+            // Ensure bounds are valid (avoid crossing)
+            if (minSafe > maxSafe) {
+                minSafe = Constants::ScreenHeight / 2 - 20;
+                maxSafe = Constants::ScreenHeight / 2 + 20;
+            }
+
+            targetY = (float)GetRandomValue(minSafe, maxSafe);
+            stepsToTarget = GetRandomValue(30, 80);
+        }
+
+        // Move towards target (Smoothing)
+        float diff = targetY - lastY;
+        float move = 0.0f;
+        if (std::abs(diff) > 1.0f) {
+             move = (diff > 0) ? 1.0f : -1.0f;
+        } else {
+             move = diff; // Snap to small diffs
+        }
+        
+        // Very occasional noise for slight organic feel, but mostly smooth
+        if (GetRandomValue(0, 10) == 0) {
+            move += (float)GetRandomValue(-1, 1) * 0.5f;
+        }
+
+        lastY += move;
         
         // Clamp
-        int minH = Constants::GapHeight / 2 + 20;
-        int maxH = Constants::ScreenHeight - Constants::GapHeight / 2 - 20;
+        float minH = currentGapHeight / 2.0f + 20.0f;
+        float maxH = Constants::ScreenHeight - currentGapHeight / 2.0f - 20.0f;
         
         if (lastY < minH) lastY = minH;
         if (lastY > maxH) lastY = maxH;
 
-        int ceilingY = lastY - Constants::GapHeight / 2;
-        int floorY = lastY + Constants::GapHeight / 2;
+        int ceilingY = (int)(lastY - currentGapHeight / 2.0f);
+        int floorY = (int)(lastY + currentGapHeight / 2.0f);
 
         if (ceilingY > 0) {
             obstacles.push_back({(float)x, 0, (float)Constants::TerrainStep, (float)ceilingY});
