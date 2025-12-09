@@ -25,6 +25,13 @@ private:
     Font gameFont;
     
     std::vector<std::unique_ptr<Missile>> missiles;
+    
+    struct Explosion {
+        Vector2 position;
+        float timer; // 0.0 to 1.0 (lifetime)
+    };
+    std::vector<Explosion> explosions;
+
     float spawnTimer = 0.0f;
 
     bool gameOver;

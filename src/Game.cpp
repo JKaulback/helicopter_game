@@ -67,28 +67,42 @@ void Game::Update() {
     }
 
     // Update Missiles
-    for (auto& missile : missiles) {
-        missile->Update(helicopter.GetPosition()); 
+    for (auto it = missiles.begin(); it != missiles.end(); ) {
+        if ((*it)->IsActive()) {
+            (*it)->Update(helicopter.GetPosition());
+            
+            // Check for collision with level (terrain)
+            if (level.CheckCollision((*it)->GetRect())) {
+                 // Explode!
+                 explosions.push_back({ {(*it)->GetRect().x + 15, (*it)->GetRect().y + 5}, 0.5f });
+                 it = missiles.erase(it); // Remove missile
+                 continue; 
+            }
+
+            // Check for collision with player
+            if (CheckCollisionRecs(helicopter.GetRect(), (*it)->GetRect())) {
+                gameOver = true;
+            }
+
+            ++it;
+        } else {
+            it = missiles.erase(it);
+        }
     }
     
-    // Clean up inactive missiles
-    for (auto it = missiles.begin(); it != missiles.end(); ) {
-        if (!(*it)->IsActive()) {
-            it = missiles.erase(it);
+    // Update Explosions
+    for (auto it = explosions.begin(); it != explosions.end(); ) {
+        it->timer -= GetFrameTime();
+        if (it->timer <= 0) {
+             it = explosions.erase(it);
         } else {
-            ++it;
+             ++it;
         }
     }
     
     // Check collisions
     if (level.CheckCollision(helicopter.GetRect())) {
         gameOver = true;
-    }
-    
-    for (const auto& missile : missiles) {
-        if (CheckCollisionRecs(helicopter.GetRect(), missile->GetRect())) {
-            gameOver = true;
-        }
     }
 }
 
@@ -100,6 +114,14 @@ void Game::Draw() {
     
     for (auto& missile : missiles) {
         missile->Draw();
+    }
+
+    // Draw Explosions
+    for (const auto& e : explosions) {
+        float radius = (0.5f - e.timer) * 80.0f; // Expand
+        Color col = (e.timer > 0.25f) ? ORANGE : YELLOW; // Fade color
+        col.a = (unsigned char)(e.timer * 2.0f * 255.0f); // Fade alpha
+        DrawCircle((int)e.position.x, (int)e.position.y, radius, col);
     }
 
     helicopter.Draw();
