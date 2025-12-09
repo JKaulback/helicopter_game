@@ -10,6 +10,7 @@ public:
     void Draw();
     void Reset(Vector2 startPos);
     Rectangle GetRect() const;
+    bool HasStarted() const { return hasStarted; }
 
 private:
     Vector2 position;

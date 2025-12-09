@@ -1,16 +1,20 @@
 #pragma once
 #include "raylib.h"
-#include <vector>
+#include <deque>
 
 class Level {
 public:
     void Init();
+    void Update();
     void Draw();
     bool CheckCollision(Rectangle playerRect);
-    bool CheckLanding(Rectangle playerRect);
+    float GetDistance() const { return distanceTraveled; }
 
 private:
-    std::vector<Rectangle> obstacles;
+    std::deque<Rectangle> obstacles;
     Rectangle startPad;
-    Rectangle endPad;
+    float distanceTraveled = 0.0f;
+    int lastY = 250; 
+    
+    void GenerateChunk(int startX, int width);
 };

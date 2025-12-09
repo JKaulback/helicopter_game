@@ -1,82 +1,85 @@
 #include "Level.h"
 #include "Constants.h"
 
-
 void Level::Init() {
-    // Define pads
-    // Start pad at [50, 350], size [100, 20]
-    startPad = {50, 350, 100, 20};
-    // End pad at [650, 350], size [100, 20]
-    endPad = {650, 350, 100, 20};
-
     obstacles.clear();
+    distanceTraveled = 0.0f;
+    lastY = Constants::ScreenHeight / 2;
 
-    // Terrain parameters
-    const int stepX = 10;            // Width of each terrain slice
-    const int gapHeight = 160;       // Height of the flight path
-    int currentY = 250;              // Starting center Y of the path
-    
-    // Generate terrain slices across the screen
-    for (int x = 0; x < Constants::ScreenWidth; x += stepX) {
-        // Determine whether we are near the pads
-        // Start Pad zone: 50 to 150. End Pad zone: 650 to 750.
-        // We add some buffer
-        bool inSafeZone = (x > startPad.x - 50 && x < startPad.x + startPad.width + 50) || 
-                          (x > endPad.x - 50 && x < endPad.x + endPad.width + 50);
+    // Initialize Start Pad
+    startPad = {50, 350, 100, 20};
 
-        if (!inSafeZone) {
-            // Random walk the path center
-            // Change currentY by a random amount
-            currentY += GetRandomValue(-5, 5);
-            
-            // Clamp currentY to stay within screen with some buffer
-            if (currentY < gapHeight/2 + 20) currentY = gapHeight/2 + 20;
-            if (currentY > Constants::ScreenHeight - gapHeight/2 - 20) currentY = Constants::ScreenHeight - gapHeight/2 - 20;
-        } else {
-            // In safe zones, pull the path towards a default safe height (e.g. 250)
-            // or just ensure it is open. 
-            // Let's drift it towards 250 smoothly if needed, or just set it:
-            // But sudden jumps are bad.
-            // So we just ensure obstacles don't spawn in the critical area.
-            // Simplification: Do not spawn terrain in safe zones, or spawn minimal terrain.
-        }
+    // Generate safe zone (first 500 pixels)
+    // We manually add floor and ceiling to create an open tunnel
+    for (int x = 0; x < 500; x += Constants::TerrainStep) {
+        int ceilingY = 50; 
+        int floorY = 400; // Leave plenty of room for pad at 350
 
-        // Calculate ceiling and floor obstacle heights
-        int ceilingY = currentY - gapHeight / 2;
-        int floorY = currentY + gapHeight / 2;
-
-        // Overlay specific logic for Safe Zones to ensure pads are clear
-        if (inSafeZone) {
-             ceilingY = 50;  // High ceiling
-             floorY = 400;   // Low floor (pads are at 350, floorY at 400 means gap is clear effectively)
-             // Actually, if floorY is 400, the obstacle starts at 400 and goes down. 
-             // Pad is at 350-370. So clear.
-        }
-
-        // Add Ceiling Rect
-        // Top of screen is 0. Height is ceilingY.
-        if (ceilingY > 0) {
-            obstacles.push_back({(float)x, 0, (float)stepX, (float)ceilingY});
-        }
-
-        // Add Floor Rect
-        // Starts at floorY, goes to ScreenHeight.
-        if (floorY < Constants::ScreenHeight) {
-            obstacles.push_back({(float)x, (float)floorY, (float)stepX, (float)(Constants::ScreenHeight - floorY)});
-        }
+        // Ceiling
+        obstacles.push_back({(float)x, 0, (float)Constants::TerrainStep, (float)ceilingY});
+        // Floor
+        obstacles.push_back({(float)x, (float)floorY, (float)Constants::TerrainStep, (float)(Constants::ScreenHeight - floorY)});
     }
 
-    // Add side boundaries
-    obstacles.push_back({0, 0, 20, (float)Constants::ScreenHeight}); // Left wall
-    obstacles.push_back({(float)Constants::ScreenWidth - 20, 0, 20, (float)Constants::ScreenHeight}); // Right wall
+    // Generate initial terrain to fill the rest of the screen plus buffer
+    GenerateChunk(500, Constants::ScreenWidth + 100 - 500);
+}
+
+void Level::Update() {
+    // Scroll obstacles
+    for (auto& obs : obstacles) {
+        obs.x -= Constants::ScrollSpeed;
+    }
+    
+    // Scroll start pad
+    startPad.x -= Constants::ScrollSpeed;
+    
+    distanceTraveled += Constants::ScrollSpeed;
+
+    // Cull off-screen obstacles (assuming they are sorted by X, and front is leftmost)
+    while (!obstacles.empty() && obstacles.front().x + obstacles.front().width < 0) {
+        obstacles.pop_front();
+    }
+
+    // Generate new obstacles if needed
+    // Check rightmost obstacle
+    float rightEdge = 0;
+    if (!obstacles.empty()) {
+        rightEdge = obstacles.back().x + obstacles.back().width;
+    }
+
+    if (rightEdge < Constants::ScreenWidth + 50) {
+        GenerateChunk((int)rightEdge, 100);
+    }
+
+}
+
+void Level::GenerateChunk(int startX, int width) {
+    for (int x = startX; x < startX + width; x += Constants::TerrainStep) {
+        // Random walk
+        lastY += GetRandomValue(-5, 5);
+        
+        // Clamp
+        int minH = Constants::GapHeight / 2 + 20;
+        int maxH = Constants::ScreenHeight - Constants::GapHeight / 2 - 20;
+        
+        if (lastY < minH) lastY = minH;
+        if (lastY > maxH) lastY = maxH;
+
+        int ceilingY = lastY - Constants::GapHeight / 2;
+        int floorY = lastY + Constants::GapHeight / 2;
+
+        if (ceilingY > 0) {
+            obstacles.push_back({(float)x, 0, (float)Constants::TerrainStep, (float)ceilingY});
+        }
+        if (floorY < Constants::ScreenHeight) {
+            obstacles.push_back({(float)x, (float)floorY, (float)Constants::TerrainStep, (float)(Constants::ScreenHeight - floorY)});
+        }
+    }
 }
 
 void Level::Draw() {
-    // Draw pads
     DrawRectangleRec(startPad, GRAY);
-    DrawRectangleRec(endPad, GREEN);
-
-    // Draw obstacles
     for (const auto& obs : obstacles) {
         DrawRectangleRec(obs, MAROON);
     }
@@ -88,11 +91,8 @@ bool Level::CheckCollision(Rectangle playerRect) {
             return true;
         }
     }
+    // Also check screen bounds if no obstacles generated there (e.g. initial gap)
+    if (playerRect.y < 0 || playerRect.y + playerRect.height > Constants::ScreenHeight) return true;
     return false;
 }
 
-bool Level::CheckLanding(Rectangle playerRect) {
-    // Check if fully contained within end pad and velocity is low (velocity check not implemented here yet, just position)
-    // For now, just check intersection with a tolerance
-    return CheckCollisionRecs(playerRect, endPad); 
-}

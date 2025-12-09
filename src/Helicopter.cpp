@@ -1,4 +1,5 @@
 #include "Helicopter.h"
+#include "Constants.h"
 #include <cmath>
 
 // Define colors locally if needed or rely on raylib's defines if available globally or define here
@@ -99,6 +100,16 @@ void Helicopter::Update() {
     position.x += velocity.x;
     position.y += velocity.y;
     
+    // Clamp to screen bounds
+    if (position.x < 0) {
+        position.x = 0;
+        velocity.x = 0;
+    }
+    if (position.x > Constants::ScreenWidth - width) {
+        position.x = Constants::ScreenWidth - width;
+        velocity.x = 0;
+    }
+
     // Simple friction/drag
     velocity.x *= 0.98f;
     velocity.y *= 0.98f;

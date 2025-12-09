@@ -1,5 +1,6 @@
 #include "Game.h"
 #include <ctime>
+#include <cstdio>
 
 Game::Game() : gameOver(false), victory(false) {}
 
@@ -28,10 +29,9 @@ void Game::Run() {
 }
 
 void Game::Update() {
-    if (gameOver || victory) {
+    if (gameOver) {
         if (IsKeyPressed(KEY_R)) {
             gameOver = false;
-            victory = false;
             helicopter.Reset({100, 300});
             level.Init();
         }
@@ -39,14 +39,13 @@ void Game::Update() {
     }
 
     helicopter.Update();
+    if (helicopter.HasStarted()) {
+        level.Update(); // Scroll terrain
+    }
     
     // Check collisions
     if (level.CheckCollision(helicopter.GetRect())) {
         gameOver = true;
-    }
-    
-    if (level.CheckLanding(helicopter.GetRect())) {
-        victory = true;
     }
 }
 
@@ -57,17 +56,15 @@ void Game::Draw() {
     level.Draw();
     helicopter.Draw();
 
+    // Draw Score
+    char scoreText[50];
+    sprintf(scoreText, "Distance: %d", (int)level.GetDistance());
+    DrawTextEx(gameFont, scoreText, {10, 10}, 20, 1, BLACK);
+
     if (gameOver) {
         DrawRectangle(0, 0, Constants::ScreenWidth, Constants::ScreenHeight, Fade(BLACK, 0.5f));
         Vector2 textMeasure = MeasureTextEx(gameFont, "GAME OVER", 40, 2);
         DrawTextEx(gameFont, "GAME OVER", {Constants::ScreenWidth/2 - textMeasure.x/2, Constants::ScreenHeight/2 - 20}, 40, 2, RED);
-        
-        Vector2 subTextMeasure = MeasureTextEx(gameFont, "Press 'R' to Restart", 20, 1);
-        DrawTextEx(gameFont, "Press 'R' to Restart", {Constants::ScreenWidth/2 - subTextMeasure.x/2, Constants::ScreenHeight/2 + 30}, 20, 1, DARKGRAY);
-    } else if (victory) {
-        DrawRectangle(0, 0, Constants::ScreenWidth, Constants::ScreenHeight, Fade(BLACK, 0.5f));
-        Vector2 textMeasure = MeasureTextEx(gameFont, "VICTORY!", 40, 2);
-        DrawTextEx(gameFont, "VICTORY!", {Constants::ScreenWidth/2 - textMeasure.x/2, Constants::ScreenHeight/2 - 20}, 40, 2, GREEN);
         
         Vector2 subTextMeasure = MeasureTextEx(gameFont, "Press 'R' to Restart", 20, 1);
         DrawTextEx(gameFont, "Press 'R' to Restart", {Constants::ScreenWidth/2 - subTextMeasure.x/2, Constants::ScreenHeight/2 + 30}, 20, 1, DARKGRAY);
