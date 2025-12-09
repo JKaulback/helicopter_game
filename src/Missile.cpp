@@ -132,7 +132,7 @@ void LooperMissile::Update(Vector2 playerPos) {
 }
 
 // --- Seeker Missile ---
-SeekerMissile::SeekerMissile(Vector2 startPos) : Missile(startPos, ORANGE) {}
+SeekerMissile::SeekerMissile(Vector2 startPos) : Missile(startPos, ORANGE), baseY(startPos.y), verticalVelocity(0.0f) {}
 
 void SeekerMissile::Update(Vector2 playerPos) {
     Vector2 oldPos = position;
@@ -142,15 +142,28 @@ void SeekerMissile::Update(Vector2 playerPos) {
 
     position.x -= speed;
 
-    // Seeker logic
-    float wave = sinf(timeAlive * 8.0f) * 10.0f;
-    float diffY = playerPos.y - position.y;
-    float seekSpeed = 1.0f;
-    
-    if (diffY > 0) position.y += seekSpeed;
-    else position.y -= seekSpeed;
+    // Seeker logic (Smooth with Inertia)
+    // 1. Accelerate towards player Y
+    float accel = 0.05f;
+    float maxVel = 2.0f; // Increased max velocity slightly to track better
 
-    position.y += wave;
+    if (playerPos.y > baseY) {
+        verticalVelocity += accel;
+    } else {
+        verticalVelocity -= accel;
+    }
+
+    // Clamp velocity
+    if (verticalVelocity > maxVel) verticalVelocity = maxVel;
+    if (verticalVelocity < -maxVel) verticalVelocity = -maxVel;
+
+    // Apply velocity
+    baseY += verticalVelocity;
+
+    // 2. Add wave offset relative to baseY
+    // Note: amplitude 5.0f is enough for visual effect without chaos
+    float wave = sinf(timeAlive * 8.0f) * 5.0f; 
+    position.y = baseY + wave;
 
     // Rotation
     float dx = position.x - oldPos.x;

@@ -42,4 +42,8 @@ class SeekerMissile : public Missile {
 public:
     SeekerMissile(Vector2 startPos);
     void Update(Vector2 playerPos) override;
+
+private:
+    float baseY;
+    float verticalVelocity = 0.0f;
 };
