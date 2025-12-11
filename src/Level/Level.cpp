@@ -25,10 +25,10 @@ void Level::Init() {
     }
 
     // Add Tutorial Text
-    levelTexts.push_back({{200.0f, 200.0f}, "W / UP to Fly", 20, DARKGRAY});
-    levelTexts.push_back({{200.0f, 230.0f}, "A / LEFT to Move Left", 20, DARKGRAY});
-    levelTexts.push_back({{200.0f, 260.0f}, "D / RIGHT to Move Right", 20, DARKGRAY});
-    levelTexts.push_back({{200.0f, 290.0f}, "SPACE to Shoot", 20, DARKGRAY});
+    levelTexts.push_back({{200.0f, 200.0f}, "W / UP to Fly", 20, LIGHTGRAY});
+    levelTexts.push_back({{200.0f, 230.0f}, "A / LEFT to Move Left", 20, LIGHTGRAY});
+    levelTexts.push_back({{200.0f, 260.0f}, "D / RIGHT to Move Right", 20, LIGHTGRAY});
+    levelTexts.push_back({{200.0f, 290.0f}, "SPACE to Shoot", 20, LIGHTGRAY});
     levelTexts.push_back({{200.0f, 320.0f}, "Avoid Obstacles!", 20, MAROON});
 
     // Generate initial terrain
@@ -184,7 +184,7 @@ void Level::Draw(const Font& font) {
     }
 
     for (const auto& obs : obstacles) {
-        DrawRectangleRec(obs, MAROON);
+        DrawRectangleRec(obs, BROWN);
     }
 }
 

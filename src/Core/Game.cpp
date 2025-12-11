@@ -23,6 +23,7 @@ void Game::Init() {
     
     helicopter.Init(HeliConst::StartPos); 
     level.Init();
+    backgroundManager.Init();
 
     missiles.clear();
     explosions.clear();
@@ -35,11 +36,17 @@ void Game::Init() {
     ammoRechargeTimer = 0.0f;
 
     gameFont = LoadFont("assets/arial.ttf");
+    
+    // Load Shader
+    cavernShader = LoadShader(0, "assets/cavern.fs");
+    target = LoadRenderTexture(Constants::ScreenWidth, Constants::ScreenHeight);
 }
 
 void Game::Shutdown() {
     audioManager.Shutdown();
     UnloadFont(gameFont);
+    UnloadShader(cavernShader);
+    UnloadRenderTexture(target);
     CloseWindow();
 }
 
@@ -245,29 +252,45 @@ void Game::Update() {
 }
 
 void Game::Draw() {
+    // Draw everything to the render texture
+    BeginTextureMode(target);
+        ClearBackground((Color){25, 25, 30, 255});  // Dark cave background
+        
+        backgroundManager.Draw(level.GetDistance());
+
+        // Draw World
+        level.Draw(gameFont);
+        
+        for (auto& missile : missiles) {
+            missile->Draw();
+        }
+
+        for (const auto& p : projectiles) {
+            p.Draw();
+        }
+        
+        for (const auto& e : explosions) {
+            e.Draw();
+        }
+
+        for (const auto& r : rocks) {
+            r.Draw();
+        }
+
+        helicopter.Draw();
+    EndTextureMode();
+
+    // Begin drawing to screen
     BeginDrawing();
-    ClearBackground(RAYWHITE);
-
-    level.Draw(gameFont);
-    
-    for (auto& missile : missiles) {
-        missile->Draw();
-    }
-
-    for (const auto& p : projectiles) {
-        p.Draw();
-    }
-    
-    // Draw Explosions
-    for (const auto& e : explosions) {
-        e.Draw();
-    }
-
-    for (const auto& r : rocks) {
-        r.Draw();
-    }
-
-    helicopter.Draw();
+        ClearBackground(BLACK);
+        
+        // Draw the render texture with the shader
+        BeginShaderMode(cavernShader);
+            // Note: RenderTextures are y-flipped in OpenGL
+            DrawTextureRec(target.texture, 
+                           (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, 
+                           (Vector2){ 0, 0 }, WHITE);
+        EndShaderMode();
 
     // Draw Control Panel
     DrawRectangle(0, 0, Constants::ScreenWidth, Constants::ControlPanelHeight, DARKGRAY);

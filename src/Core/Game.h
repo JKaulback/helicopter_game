@@ -10,6 +10,7 @@
 #include "Explosion.h"
 #include "Rock.h"
 #include "LeaderboardManager.h"
+#include "BackgroundManager.h"
 #include <vector>
 #include <memory>
 
@@ -54,4 +55,11 @@ private:
     char playerNameInput[10] = { 0 };
     int letterCount = 0;
     bool nameEntered = false;
+
+    // Shaders
+    Shader cavernShader;
+    RenderTexture2D target; 
+    
+    // Background
+    BackgroundManager backgroundManager;
 };
