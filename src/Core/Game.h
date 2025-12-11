@@ -5,6 +5,7 @@
 #include "Level.h"
 #include "Missile.h"
 #include "MissileFactory.h"
+#include "AudioManager.h"
 #include "Projectile.h"
 #include "Explosion.h"
 #include <vector>
@@ -25,16 +26,12 @@ private:
     void Reset();
     void cleanup();
     void gameOver();
-
     Helicopter helicopter;
     Level level;
     Font gameFont;
 
     // Audio
-    Sound shootSound;
-    Sound explodeSound;
-    Sound gameOverSound;
-    Music bgm;
+    AudioManager audioManager;
     
     std::vector<std::unique_ptr<Missile>> missiles;
     std::vector<Explosion> explosions;

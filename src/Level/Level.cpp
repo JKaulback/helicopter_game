@@ -5,6 +5,7 @@
 void Level::Init() {
     obstacles.clear();
     targets.clear();
+    levelTexts.clear();
     distanceTraveled = 0.0f;
     lastY = (Constants::ScreenHeight + Constants::ControlPanelHeight) / 2.0f;
     targetY = lastY;
@@ -23,6 +24,13 @@ void Level::Init() {
         obstacles.push_back({(float)x, (float)floorY, (float)Constants::TerrainStep, (float)(Constants::ScreenHeight - floorY)});
     }
 
+    // Add Tutorial Text
+    levelTexts.push_back({{200.0f, 200.0f}, "W / UP to Fly", 20, DARKGRAY});
+    levelTexts.push_back({{200.0f, 230.0f}, "A / LEFT to Move Left", 20, DARKGRAY});
+    levelTexts.push_back({{200.0f, 260.0f}, "D / RIGHT to Move Right", 20, DARKGRAY});
+    levelTexts.push_back({{200.0f, 290.0f}, "SPACE to Shoot", 20, DARKGRAY});
+    levelTexts.push_back({{200.0f, 320.0f}, "Avoid Obstacles!", 20, MAROON});
+
     // Generate initial terrain
     GenerateChunk(500, Constants::ScreenWidth + 100 - 500);
 }
@@ -35,6 +43,16 @@ void Level::Update() {
     
     // Scroll start pad
     startPad.x -= Constants::ScrollSpeed;
+    
+    // Scroll texts
+    for (auto& txt : levelTexts) {
+        txt.position.x -= Constants::ScrollSpeed;
+    }
+
+    // Remove off-screen texts
+    if (!levelTexts.empty() && levelTexts.front().position.x < -300) {
+        levelTexts.pop_front();
+    }
     
     distanceTraveled += Constants::ScrollSpeed;
 
@@ -149,8 +167,12 @@ void Level::GenerateChunk(int startX, int width) {
     }
 }
 
-void Level::Draw() {
+void Level::Draw(const Font& font) {
     DrawRectangleRec(startPad, GRAY);
+    
+    for (const auto& txt : levelTexts) {
+        DrawTextEx(font, txt.text, txt.position, (float)txt.fontSize, 1.0f, txt.color);
+    }
     
     for (const auto& target : targets) {
         if (!target.active) continue;

@@ -35,7 +35,7 @@ This project uses CMake.
 ## Credits
 
 *   **Programming**: [Your Name/User]
-*   **Soundtrack**: Music by **Rob0neMusic** [YouTube](https://youtu.be/ApdlmRlLXAg?t=292).
+*   **Soundtracks**: Music by **Rob0neMusic** [YouTube](https://youtu.be/ApdlmRlLXAg) and **FesliyanStudios Background Music** [YouTube](https://www.youtube.com/watch?v=NjpjKDqKwfo).
 *   **Sound Effects**: Sound Effect by **freesound_community** [Pixabay](https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=6435).
 *   **Raylib**: [Raylib](https://www.raylib.com/).
 

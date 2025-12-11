@@ -7,12 +7,20 @@ public:
     bool CheckProjectileCollision(Rectangle projRect);
     void Init();
     void Update();
-    void Draw();
+    void Draw(const Font& font);
     bool CheckCollision(Rectangle playerRect);
     float GetDistance() const { return distanceTraveled; }
     float GetCurrentGapCenter() const { return lastY; }
 
 private:
+    struct LevelText {
+        Vector2 position;
+        const char* text;
+        int fontSize;
+        Color color;
+    };
+    std::deque<LevelText> levelTexts;
+
     struct Target {
         Rectangle rect;
         Rectangle weakSpot;
