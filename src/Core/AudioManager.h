@@ -10,7 +10,7 @@ public:
     void Shutdown();
     
     // Updates music streaming and switching logic based on game state
-    void UpdateMusic(bool isLevelActive);
+    void UpdateMusic(bool isStarted, bool isGameOver, int delayTarget);
 
     void PlayShoot();
     void PlayExplode();
@@ -23,4 +23,6 @@ private:
     
     Music bgm;
     Music menu;
+
+    int delay = 0;
 };

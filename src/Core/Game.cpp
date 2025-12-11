@@ -60,7 +60,7 @@ void Game::Reset() {
 
 void Game::Update() {
     // Music Control
-    audioManager.UpdateMusic(helicopter.HasStarted() && !isGameOver);
+    audioManager.UpdateMusic(helicopter.HasStarted(), isGameOver, 90);
 
     if (isGameOver) {
         if (IsKeyPressed(KEY_R)) {

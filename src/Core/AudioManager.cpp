@@ -20,6 +20,8 @@ void AudioManager::Init() {
     
     bgm.looping = true;
     menu.looping = true;
+
+    delay = 0;
 }
 
 void AudioManager::Shutdown() {
@@ -33,11 +35,23 @@ void AudioManager::Shutdown() {
     CloseAudioDevice();
 }
 
-void AudioManager::UpdateMusic(bool isLevelActive) {
-    if (isLevelActive) {
+void AudioManager::UpdateMusic(bool isStarted, bool isGameOver, int delayTarget) {
+    // While the game is started and not game over, play bgm
+    if (isStarted && !isGameOver) {
         if (IsMusicStreamPlaying(menu)) StopMusicStream(menu);
         if (!IsMusicStreamPlaying(bgm)) PlayMusicStream(bgm);
         UpdateMusicStream(bgm);
+        delay = 0;
+    // If the game is over, stop bgm and delay menu music
+    } else if (isStarted && isGameOver) {
+        if (IsMusicStreamPlaying(bgm)) StopMusicStream(bgm);
+        if (delay < delayTarget) {
+            delay++;
+            return;
+        }
+        if (!IsMusicStreamPlaying(menu)) PlayMusicStream(menu);
+        UpdateMusicStream(menu);
+    // If the game is not started, play menu music
     } else {
         if (IsMusicStreamPlaying(bgm)) StopMusicStream(bgm);
         if (!IsMusicStreamPlaying(menu)) PlayMusicStream(menu);
