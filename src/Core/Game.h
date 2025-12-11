@@ -9,6 +9,7 @@
 #include "Projectile.h"
 #include "Explosion.h"
 #include "Rock.h"
+#include "LeaderboardManager.h"
 #include <vector>
 #include <memory>
 
@@ -47,4 +48,10 @@ private:
 
     bool isGameOver;
     bool victory;
+    
+    // Leaderboard
+    LeaderboardManager leaderboard;
+    char playerNameInput[10] = { 0 };
+    int letterCount = 0;
+    bool nameEntered = false;
 };

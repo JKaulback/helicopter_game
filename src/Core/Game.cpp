@@ -63,6 +63,11 @@ void Game::Reset() {
     rockSpawnTimer = 0.0f;
     currentAmmo = GameConst::MaxAmmo;
     ammoRechargeTimer = 0.0f;
+    
+    // Reset Leaderboard Input
+    letterCount = 0;
+    for (int i = 0; i < 10; ++i) playerNameInput[i] = '\0';
+    nameEntered = false;
 }
 
 void Game::Update() {
@@ -70,8 +75,38 @@ void Game::Update() {
     audioManager.UpdateMusic(helicopter.HasStarted(), isGameOver, 90);
 
     if (isGameOver) {
-        if (IsKeyPressed(KEY_R)) {
-            Reset();
+        int score = (int)level.GetDistance();
+        
+        // Check for High Score Input
+        if (leaderboard.IsHighScore(score) && !nameEntered) {
+             SetMouseCursor(MOUSE_CURSOR_IBEAM);
+             
+             int key = GetCharPressed();
+             while (key > 0) {
+                 if ((key >= 32) && (key <= 125) && (letterCount < 9)) {
+                     playerNameInput[letterCount] = (char)key;
+                     playerNameInput[letterCount+1] = '\0'; // Null terminator
+                     letterCount++;
+                 }
+                 key = GetCharPressed();
+             }
+             
+             if (IsKeyPressed(KEY_BACKSPACE)) {
+                 letterCount--;
+                 if (letterCount < 0) letterCount = 0;
+                 playerNameInput[letterCount] = '\0';
+             }
+             
+             if (IsKeyPressed(KEY_ENTER) && letterCount > 0) {
+                 leaderboard.AddEntry(playerNameInput, score);
+                 nameEntered = true;
+                 SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+             }
+        } else {
+             // Normal Game Over Screen
+             if (IsKeyPressed(KEY_R)) {
+                Reset();
+            }
         }
         return;
     }
@@ -142,7 +177,7 @@ void Game::Update() {
         m->Update(helicopter.GetPosition());
 
         if (level.CheckCollision(m->GetRect())) {
-            m->Destroy();
+            m->Deactivate();
             explosions.emplace_back(Vector2{m->GetRect().x + 15, m->GetRect().y + 5});
             audioManager.PlayExplode();
         }
@@ -151,7 +186,7 @@ void Game::Update() {
             if (!p.IsActive()) continue;
 
             if (CheckCollisionRecs(m->GetRect(), p.GetRect())) {
-                m->Destroy();
+                m->Deactivate();
                 p.Deactivate();
                 
                 Vector2 mid = { (m->GetRect().x + p.GetPosition().x)/2, (m->GetRect().y + p.GetPosition().y)/2 };
@@ -250,12 +285,50 @@ void Game::Draw() {
     DrawTextEx(gameFont, ammoText, Vector2{200.0f, 15.0f}, 20, 1, ammoColor);
 
     if (isGameOver) {
-        DrawRectangle(0, 0, Constants::ScreenWidth, Constants::ScreenHeight, Fade(BLACK, 0.5f));
-        Vector2 textMeasure = MeasureTextEx(gameFont, "GAME OVER", 40, 2);
-        DrawTextEx(gameFont, "GAME OVER", Vector2{(float)Constants::ScreenWidth/2.0f - textMeasure.x/2.0f, (float)Constants::ScreenHeight/2.0f - 20.0f}, 40, 2, RED);
+        DrawRectangle(0, 0, Constants::ScreenWidth, Constants::ScreenHeight, Fade(BLACK, 0.85f));
         
-        Vector2 subTextMeasure = MeasureTextEx(gameFont, "Press 'R' to Restart", 20, 1);
-        DrawTextEx(gameFont, "Press 'R' to Restart", Vector2{(float)Constants::ScreenWidth/2.0f - subTextMeasure.x/2.0f, (float)Constants::ScreenHeight/2.0f + 30.0f}, 20, 1, DARKGRAY);
+        int currentScore = (int)level.GetDistance();
+
+        if (leaderboard.IsHighScore(currentScore) && !nameEntered) {
+             // Input UI
+             const char* title = "NEW HIGH SCORE!";
+             int titleWidth = MeasureText(title, 40);
+             DrawText(title, Constants::ScreenWidth/2 - titleWidth/2, 150, 40, GOLD);
+             
+             const char* scoreText = TextFormat("Score: %d", currentScore);
+             int scoreWidth = MeasureText(scoreText, 30);
+             DrawText(scoreText, Constants::ScreenWidth/2 - scoreWidth/2, 210, 30, WHITE);
+             
+             DrawText("Enter Name:", Constants::ScreenWidth/2 - 100, 280, 20, LIGHTGRAY);
+             
+             DrawRectangle(Constants::ScreenWidth/2 - 100, 310, 200, 40, LIGHTGRAY);
+             DrawText(playerNameInput, Constants::ScreenWidth/2 - 90, 320, 20, MAROON);
+             
+             if ((int)GetTime() % 2 == 0) {
+                 int textWidth = MeasureText(playerNameInput, 20);
+                 DrawText("_", Constants::ScreenWidth/2 - 90 + textWidth, 320, 20, MAROON);
+             }
+             
+             DrawText("Press ENTER", Constants::ScreenWidth/2 - 60, 360, 10, GRAY);
+        } else {
+             // Leaderboard UI
+             const char* title = "LEADERBOARD";
+             int titleWidth = MeasureText(title, 40);
+             DrawText(title, Constants::ScreenWidth/2 - titleWidth/2, 100, 40, GOLD);
+             
+             const auto& entries = leaderboard.GetEntries();
+             int y = 160;
+             for (size_t i = 0; i < entries.size(); ++i) {
+                 Color color = (i == 0) ? YELLOW : WHITE;
+                 const char* entryText = TextFormat("%d. %s ................. %d", i+1, entries[i].name.c_str(), entries[i].score);
+                 int entryWidth = MeasureText(entryText, 20);
+                 DrawText(entryText, Constants::ScreenWidth/2 - entryWidth/2, y, 20, color);
+                 y += 35;
+             }
+             
+             Vector2 subTextMeasure = MeasureTextEx(gameFont, "Press 'R' to Restart", 20, 1);
+             DrawTextEx(gameFont, "Press 'R' to Restart", Vector2{(float)Constants::ScreenWidth/2.0f - subTextMeasure.x/2.0f, (float)Constants::ScreenHeight - 80.0f}, 20, 1, GRAY);
+        }
     }
     
     EndDrawing();
