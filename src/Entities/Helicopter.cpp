@@ -55,7 +55,7 @@ void Helicopter::Update() {
     // Input handling
     bool inputGiven = false;
 
-    if (IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) {
+    if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) {
         velocity.y -= Constants::Helicopter::Thrust;
         inputGiven = true;
     }
