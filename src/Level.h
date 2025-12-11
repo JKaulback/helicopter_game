@@ -4,6 +4,7 @@
 
 class Level {
 public:
+    bool CheckProjectileCollision(Rectangle projRect);
     void Init();
     void Update();
     void Draw();
@@ -12,6 +13,12 @@ public:
     float GetCurrentGapCenter() const { return lastY; }
 
 private:
+    struct Target {
+        Rectangle rect;
+        Rectangle weakSpot;
+        bool active;
+    };
+    std::deque<Target> targets;
     std::deque<Rectangle> obstacles;
     Rectangle startPad;
     float distanceTraveled = 0.0f;

@@ -4,6 +4,7 @@
 
 void Level::Init() {
     obstacles.clear();
+    targets.clear();
     distanceTraveled = 0.0f;
     lastY = (Constants::ScreenHeight + Constants::ControlPanelHeight) / 2.0f;
     targetY = lastY;
@@ -40,6 +41,17 @@ void Level::Update() {
     // Cull off-screen obstacles (assuming they are sorted by X, and front is leftmost)
     while (!obstacles.empty() && obstacles.front().x + obstacles.front().width < 0) {
         obstacles.pop_front();
+    }
+
+    // Scroll targets
+    for (auto& target : targets) {
+        target.rect.x -= Constants::ScrollSpeed;
+        target.weakSpot.x -= Constants::ScrollSpeed;
+    }
+    
+    // Cull off-screen targets
+    while (!targets.empty() && targets.front().rect.x + targets.front().rect.width < 0) {
+        targets.pop_front();
     }
 
     // Generate new obstacles if needed
@@ -111,6 +123,27 @@ void Level::GenerateChunk(int startX, int width) {
         if (floorY < Constants::ScreenHeight) {
             obstacles.push_back({(float)x, (float)floorY, (float)Constants::TerrainStep, (float)(Constants::ScreenHeight - floorY)});
         }
+
+        if (GetRandomValue(0, 100) < 2) { // 2% chance per step? steps are small.
+             // ensure distance from last target
+             bool canSpawn = true;
+             if (!targets.empty()) {
+                 if (x - targets.back().rect.x < 400) canSpawn = false; 
+             }
+             
+             if (canSpawn && (floorY - ceilingY) > 60) { // Enough space
+                 float tWidth = 30.0f;
+                 float tHeight = (float)(floorY - ceilingY);
+                 float tX = (float)x;
+                 float tY = (float)ceilingY;
+                 
+                 // Weak spot
+                 float wHeight = 30.0f;
+                 float wY = (float)GetRandomValue((int)tY, (int)(tY + tHeight - wHeight));
+                 
+                 targets.push_back({{tX, tY, tWidth, tHeight}, {tX, wY, tWidth, wHeight}, true});
+             }
+        }
     }
 }
 
@@ -119,19 +152,55 @@ void Level::Draw() {
     for (const auto& obs : obstacles) {
         DrawRectangleRec(obs, MAROON);
     }
+    
+    for (const auto& target : targets) {
+        if (!target.active) continue;
+        DrawRectangleRec(target.rect, GRAY);
+        DrawRectangleRec(target.weakSpot, GREEN);
+    }
 }
 
 bool Level::CheckCollision(Rectangle playerRect) {
-    // Check Control Panel Collision
-    if (playerRect.y < Constants::ControlPanelHeight) return true;
 
     for (const auto& obs : obstacles) {
         if (CheckCollisionRecs(playerRect, obs)) {
             return true;
         }
     }
+    
+    for (const auto& target : targets) {
+        if (target.active && CheckCollisionRecs(playerRect, target.rect)) {
+            return true;
+        }
+    }
+
     // Also check screen bounds if no obstacles generated there (e.g. initial gap)
     if (playerRect.y + playerRect.height > Constants::ScreenHeight) return true;
+    return false;
+}
+
+bool Level::CheckProjectileCollision(Rectangle projRect) {
+    // Check Obstacles
+    for (const auto& obs : obstacles) {
+        if (CheckCollisionRecs(projRect, obs)) return true;
+    }
+
+    // Check Targets
+    for (auto& target : targets) {
+        if (!target.active) continue;
+        if (CheckCollisionRecs(projRect, target.rect)) {
+            // Check Weak Spot
+            if (CheckCollisionRecs(projRect, target.weakSpot)) {
+                target.active = false; // Destroy!
+                return true; 
+            }
+            return true; // Wall hit
+        }
+    }
+    
+    // Check Bounds
+    if (projRect.y + projRect.height > Constants::ScreenHeight) return true;
+    
     return false;
 }
 

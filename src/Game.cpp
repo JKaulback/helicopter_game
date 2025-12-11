@@ -134,7 +134,7 @@ void Game::Update() {
         p.position.y += p.velocity.y;
 
         // Wall Collision
-        if (level.CheckCollision(p.GetRect())) {
+        if (level.CheckProjectileCollision(p.GetRect())) {
             p.active = false;
             explosions.push_back({ {p.position.x, p.position.y}, 0.5f });
             PlaySound(explodeSound);
