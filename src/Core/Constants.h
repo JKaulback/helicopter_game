@@ -27,6 +27,7 @@ namespace Constants {
     struct Physics {
         static constexpr float ProjectileSpeed = 12.0f;
         static constexpr float ProjectileGravity = 0.08f;
+        static constexpr float RockSpeed = 2.0f;
     };
     
     struct Level {

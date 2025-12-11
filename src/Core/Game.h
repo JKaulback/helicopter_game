@@ -8,6 +8,7 @@
 #include "AudioManager.h"
 #include "Projectile.h"
 #include "Explosion.h"
+#include "Rock.h"
 #include <vector>
 #include <memory>
 
@@ -36,8 +37,10 @@ private:
     std::vector<std::unique_ptr<Missile>> missiles;
     std::vector<Explosion> explosions;
     std::vector<Projectile> projectiles;
+    std::vector<Rock> rocks;
 
-    float spawnTimer = 0.0f;
+    float missileSpawnTimer = 0.0f;
+    float rockSpawnTimer = 0.0f;
 
     int currentAmmo = 5;
     float ammoRechargeTimer = 0.0f;

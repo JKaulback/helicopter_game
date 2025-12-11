@@ -4,7 +4,7 @@
 
 void Level::Init() {
     obstacles.clear();
-    targets.clear();
+    walls.clear();
     levelTexts.clear();
     distanceTraveled = 0.0f;
     lastY = (Constants::ScreenHeight + Constants::ControlPanelHeight) / 2.0f;
@@ -60,15 +60,15 @@ void Level::Update() {
         obstacles.pop_front();
     }
 
-    // Scroll targets
-    for (auto& target : targets) {
-        target.rect.x -= Constants::ScrollSpeed;
-        target.weakSpot.x -= Constants::ScrollSpeed;
+    // Scroll walls
+    for (auto& wall : walls) {
+        wall.rect.x -= Constants::ScrollSpeed;
+        wall.weakSpot.x -= Constants::ScrollSpeed;
     }
     
-    // Cull off-screen targets
-    while (!targets.empty() && targets.front().rect.x + targets.front().rect.width < 0) {
-        targets.pop_front();
+    // Cull off-screen walls
+    while (!walls.empty() && walls.front().rect.x + walls.front().rect.width < 0) {
+        walls.pop_front();
     }
 
     // Generate new obstacles if needed
@@ -140,13 +140,16 @@ void Level::GenerateChunk(int startX, int width) {
         if (floorY < Constants::ScreenHeight) {
             obstacles.push_back({(float)x, (float)floorY, (float)Constants::TerrainStep, (float)(Constants::ScreenHeight - floorY)});
         }
+        
+        // Skip wall spawn if distance traveled is less than 500
+        if (distanceTraveled < 500) continue;
 
-        // Spawn targets (2% chance per step)
+        // Spawn walls (2% chance per step)
         if (GetRandomValue(0, 100) < 2) { 
-             // ensure distance from last target
+             // ensure distance from last wall
              bool canSpawn = true;
-             if (!targets.empty()) {
-                 if (x - targets.back().rect.x < 400) canSpawn = false; 
+             if (!walls.empty()) {
+                 if (x - walls.back().rect.x < 400) canSpawn = false; 
              }
              
              if (canSpawn && (floorY - ceilingY) > Constants::Level::MinGapHeight * 0.6f) {
@@ -161,7 +164,7 @@ void Level::GenerateChunk(int startX, int width) {
                  
                  float wY = (float)GetRandomValue((int)gapTop, (int)(gapTop + gapHeight - wHeight));
                  
-                 targets.push_back({{tX, tY, tWidth, tHeight}, {tX, wY, tWidth, wHeight}, true});
+                 walls.push_back({{tX, tY, tWidth, tHeight}, {tX, wY, tWidth, wHeight}, true});
              }
         }
     }
@@ -174,10 +177,10 @@ void Level::Draw(const Font& font) {
         DrawTextEx(font, txt.text, txt.position, (float)txt.fontSize, 1.0f, txt.color);
     }
     
-    for (const auto& target : targets) {
-        if (!target.active) continue;
-        DrawRectangleRec(target.rect, LIGHTGRAY);
-        DrawRectangleRec(target.weakSpot, GREEN);
+    for (const auto& wall : walls) {
+        if (!wall.active) continue;
+        DrawRectangleRec(wall.rect, LIGHTGRAY);
+        DrawRectangleRec(wall.weakSpot, GREEN);
     }
 
     for (const auto& obs : obstacles) {
@@ -193,8 +196,8 @@ bool Level::CheckCollision(Rectangle playerRect) {
         }
     }
     
-    for (const auto& target : targets) {
-        if (target.active && CheckCollisionRecs(playerRect, target.rect)) {
+    for (const auto& wall : walls) {
+        if (wall.active && CheckCollisionRecs(playerRect, wall.rect)) {
             return true;
         }
     }
@@ -211,13 +214,13 @@ bool Level::CheckProjectileCollision(Rectangle projRect) {
         if (CheckCollisionRecs(projRect, obs)) return true;
     }
 
-    // Check Targets
-    for (auto& target : targets) {
-        if (!target.active) continue;
-        if (CheckCollisionRecs(projRect, target.rect)) {
+    // Check Walls
+    for (auto& wall : walls) {
+        if (!wall.active) continue;
+        if (CheckCollisionRecs(projRect, wall.rect)) {
             // Check Weak Spot
-            if (CheckCollisionRecs(projRect, target.weakSpot)) {
-                target.active = false; // Destroy!
+            if (CheckCollisionRecs(projRect, wall.weakSpot)) {
+                wall.active = false; // Destroy!
                 return true; 
             }
             return true; // Wall hit

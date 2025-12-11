@@ -21,12 +21,12 @@ private:
     };
     std::deque<LevelText> levelTexts;
 
-    struct Target {
+    struct Wall {
         Rectangle rect;
         Rectangle weakSpot;
         bool active;
     };
-    std::deque<Target> targets;
+    std::deque<Wall> walls;
     std::deque<Rectangle> obstacles;
     Rectangle startPad;
     float distanceTraveled = 0.0f;

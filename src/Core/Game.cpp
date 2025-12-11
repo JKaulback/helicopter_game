@@ -1,6 +1,7 @@
 #include "Game.h"
 #include <ctime>
 #include <cstdio>
+#include <algorithm>
 
 using HeliConst = Constants::Helicopter;
 using GameConst = Constants::Game;
@@ -26,7 +27,9 @@ void Game::Init() {
     missiles.clear();
     explosions.clear();
     projectiles.clear();
-    spawnTimer = 0.0f;
+    rocks.clear();
+    missileSpawnTimer = 0.0f;
+    rockSpawnTimer = 0.0f;
     
     currentAmmo = GameConst::MaxAmmo;
     ammoRechargeTimer = 0.0f;
@@ -53,7 +56,11 @@ void Game::Reset() {
     helicopter.Reset(HeliConst::StartPos);
     level.Init();
     missiles.clear();
-    spawnTimer = 0.0f;
+    rocks.clear();
+    explosions.clear();
+    projectiles.clear();
+    missileSpawnTimer = 0.0f;
+    rockSpawnTimer = 0.0f;
     currentAmmo = GameConst::MaxAmmo;
     ammoRechargeTimer = 0.0f;
 }
@@ -75,14 +82,25 @@ void Game::Update() {
         level.Update(); // Update terrain
         
         // Spawn Missiles
-        spawnTimer += GetFrameTime();
-        if (spawnTimer > 3.0f) { // Spawn every 3 seconds
-            spawnTimer = 0.0f;
+        missileSpawnTimer += GetFrameTime();
+        if (missileSpawnTimer > 3.0f && level.GetDistance() > 1500.0f) { // Spawn every 3 seconds after 1500 distance
+            missileSpawnTimer = 0.0f;
             
             float targetY = level.GetCurrentGapCenter();
             Vector2 spawnPos = {(float)Constants::ScreenWidth + 50.0f, targetY};
             
             missiles.push_back(MissileFactory::CreateRandomMissile(spawnPos));
+        }
+
+        // Spawn Rocks
+        rockSpawnTimer += GetFrameTime();
+        if (rockSpawnTimer > 5.0f && level.GetDistance() > 2500.0f) { // Spawn every 5 seconds after 2500 distance
+            rockSpawnTimer = 0.0f;
+            
+            float targetY = level.GetCurrentGapCenter();
+            Vector2 spawnPos = {0, targetY};
+            
+            rocks.push_back(Rock(spawnPos, 15.0f));
         }
     }
 
@@ -104,6 +122,7 @@ void Game::Update() {
         }
     }
 
+    // Update and handle projectiles
     for (auto& p : projectiles) {
         if (!p.IsActive()) continue;
 
@@ -116,6 +135,7 @@ void Game::Update() {
         }
     }
 
+    // Update and handle missiles
     for (auto& m : missiles) {
         if (!m->IsActive()) continue;
 
@@ -146,6 +166,31 @@ void Game::Update() {
         }
     }
     
+    // Update and handle rocks
+    for (auto& r : rocks) {
+        if (!r.IsActive()) continue;
+
+        r.Update();
+
+        for (auto& p : projectiles) {
+            if (!p.IsActive()) continue;
+
+            if (CheckCollisionRecs(r.GetRect(), p.GetRect())) {
+                r.Deactivate();
+                p.Deactivate();
+                
+                Vector2 mid = { (r.GetRect().x + p.GetPosition().x)/2, (r.GetRect().y + p.GetPosition().y)/2 };
+                explosions.emplace_back(mid);
+                audioManager.PlayExplode();
+                break;
+            }
+        }
+
+        if (CheckCollisionRecs(helicopter.GetRect(), r.GetRect())) {
+            gameOver();
+        }
+    }
+
     // Remove inactive projectiles
     cleanup();
         
@@ -183,6 +228,10 @@ void Game::Draw() {
         e.Draw();
     }
 
+    for (const auto& r : rocks) {
+        r.Draw();
+    }
+
     helicopter.Draw();
 
     // Draw Control Panel
@@ -213,24 +262,14 @@ void Game::Draw() {
 }
 
 void Game::cleanup() {
-    auto pIt = projectiles.begin();
-    while (pIt != projectiles.end()) {
-        if (!pIt->IsActive()) {
-            pIt = projectiles.erase(pIt);
-        } else {
-            ++pIt;
-        }
-    }
+    projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(), 
+        [](const auto& p) { return !p.IsActive(); }), projectiles.end());
 
-    // Remove inactive missiles
-    auto mIt = missiles.begin();
-    while (mIt != missiles.end()) {
-        if (!(*mIt)->IsActive()) {
-            mIt = missiles.erase(mIt);
-        } else {
-            ++mIt;
-        }
-    }
+    missiles.erase(std::remove_if(missiles.begin(), missiles.end(), 
+        [](const auto& m) { return !m->IsActive(); }), missiles.end());
+
+    rocks.erase(std::remove_if(rocks.begin(), rocks.end(), 
+        [](const auto& r) { return !r.IsActive(); }), rocks.end());
 }
 
 void Game::gameOver() {
