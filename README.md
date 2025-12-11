@@ -36,6 +36,8 @@ This project uses CMake.
 
 *   **Programming**: [Your Name/User]
 *   **Soundtrack**: Music by **Rob0neMusic** [YouTube](https://youtu.be/ApdlmRlLXAg?t=292).
+*   **Sound Effects**: Sound Effect by **freesound_community** [Pixabay](https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=6435).
+*   **Raylib**: [Raylib](https://www.raylib.com/).
 
 ## Requirements
 *   C++17 compatible compiler

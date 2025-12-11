@@ -7,7 +7,7 @@ using GameConst = Constants::Game;
 using PhysConst = Constants::Physics;
 using LevelConst = Constants::Level;
 
-Game::Game() : gameOver(false), victory(false) {}
+Game::Game() : isGameOver(false), victory(false) {}
 
 Game::~Game() {
     UnloadFont(gameFont);
@@ -24,6 +24,8 @@ void Game::Init() {
     // NOTE: These files are placeholders. The game will log warnings if not found but continue running.
     shootSound = LoadSound("assets/shoot.wav");
     explodeSound = LoadSound("assets/explode.wav");
+    gameOverSound = LoadSound("assets/gameover.wav");
+    
     bgm = LoadMusicStream("assets/music.mp3");
     bgm.looping = true;
     
@@ -39,13 +41,12 @@ void Game::Init() {
     ammoRechargeTimer = 0.0f;
 
     gameFont = LoadFont("assets/arial.ttf");
-    gameOver = false;
-    victory = false;
 }
 
 void Game::Shutdown() {
     UnloadSound(shootSound);
     UnloadSound(explodeSound);
+    UnloadSound(gameOverSound);
     UnloadMusicStream(bgm);
     CloseAudioDevice();
     UnloadFont(gameFont);
@@ -61,7 +62,7 @@ void Game::Run() {
 }
 
 void Game::Reset() {
-    gameOver = false;
+    isGameOver = false;
     helicopter.Reset(HeliConst::StartPos);
     level.Init();
     missiles.clear();
@@ -72,14 +73,14 @@ void Game::Reset() {
 
 void Game::Update() {
     // Music Control
-    if (helicopter.HasStarted() && !gameOver) {
+    if (helicopter.HasStarted() && !isGameOver) {
         if (!IsMusicStreamPlaying(bgm)) PlayMusicStream(bgm);
         UpdateMusicStream(bgm);
     } else {
         if (IsMusicStreamPlaying(bgm)) StopMusicStream(bgm);
     }
 
-    if (gameOver) {
+    if (isGameOver) {
         if (IsKeyPressed(KEY_R)) {
             Reset();
         }
@@ -159,7 +160,7 @@ void Game::Update() {
         }
 
         if (CheckCollisionRecs(helicopter.GetRect(), m->GetRect())) {
-            gameOver = true;
+            gameOver();
         }
     }
     
@@ -177,7 +178,7 @@ void Game::Update() {
     }
     
     if (level.CheckCollision(helicopter.GetRect())) {
-        gameOver = true;
+        gameOver();
     }
 }
 
@@ -217,7 +218,7 @@ void Game::Draw() {
     Color ammoColor = (currentAmmo == 0) ? RED : GREEN;
     DrawTextEx(gameFont, ammoText, Vector2{200.0f, 15.0f}, 20, 1, ammoColor);
 
-    if (gameOver) {
+    if (isGameOver) {
         DrawRectangle(0, 0, Constants::ScreenWidth, Constants::ScreenHeight, Fade(BLACK, 0.5f));
         Vector2 textMeasure = MeasureTextEx(gameFont, "GAME OVER", 40, 2);
         DrawTextEx(gameFont, "GAME OVER", Vector2{(float)Constants::ScreenWidth/2.0f - textMeasure.x/2.0f, (float)Constants::ScreenHeight/2.0f - 20.0f}, 40, 2, RED);
@@ -248,4 +249,9 @@ void Game::cleanup() {
             ++mIt;
         }
     }
+}
+
+void Game::gameOver() {
+    isGameOver = true;
+    PlaySound(gameOverSound);
 }

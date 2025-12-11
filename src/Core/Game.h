@@ -24,6 +24,7 @@ private:
     void Draw();
     void Reset();
     void cleanup();
+    void gameOver();
 
     Helicopter helicopter;
     Level level;
@@ -32,6 +33,7 @@ private:
     // Audio
     Sound shootSound;
     Sound explodeSound;
+    Sound gameOverSound;
     Music bgm;
     
     std::vector<std::unique_ptr<Missile>> missiles;
@@ -43,6 +45,6 @@ private:
     int currentAmmo = 5;
     float ammoRechargeTimer = 0.0f;
 
-    bool gameOver;
+    bool isGameOver;
     bool victory;
 };
