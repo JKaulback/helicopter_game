@@ -4,6 +4,9 @@
 #include "Helicopter.h"
 #include "Level.h"
 #include "Missile.h"
+#include "MissileFactory.h"
+#include "Projectile.h"
+#include "Explosion.h"
 #include <vector>
 #include <memory>
 
@@ -20,6 +23,7 @@ private:
     void Update();
     void Draw();
     void Reset();
+    void cleanup();
 
     Helicopter helicopter;
     Level level;
@@ -31,20 +35,7 @@ private:
     Music bgm;
     
     std::vector<std::unique_ptr<Missile>> missiles;
-    
-    struct Explosion {
-        Vector2 position;
-        float timer; // 0.0 to 1.0 (lifetime)
-    };
     std::vector<Explosion> explosions;
-
-    struct Projectile {
-        Vector2 position;
-        Vector2 velocity;
-        bool active = true;
-        float radius = 5.0f;
-        Rectangle GetRect() const { return {position.x - radius, position.y - radius, radius*2, radius*2}; }
-    };
     std::vector<Projectile> projectiles;
 
     float spawnTimer = 0.0f;
