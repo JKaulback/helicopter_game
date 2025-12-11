@@ -107,7 +107,7 @@ void Game::Update() {
     if (IsKeyPressed(KEY_SPACE) && currentAmmo > 0) {
         Vector2 heliPos = helicopter.GetPosition();
         // Spawn at nose (Width 40, Height 20 -> Center Right ~ 40, 10)
-        projectiles.emplace_back(Vector2{heliPos.x + HeliConst::Width, heliPos.y + HeliConst::Height / 2.0f}, Vector2{PhysConst::ProjectileSpeed, 0.0f});
+        projectiles.emplace_back(Vector2{heliPos.x + HeliConst::Width, heliPos.y + HeliConst::Height / 2.0f}, Vector2{PhysConst::ProjectileSpeed, 0.0f}, helicopter.IsFacingRight());
         currentAmmo--;
         PlaySound(shootSound);
     }

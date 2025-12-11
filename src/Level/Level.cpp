@@ -69,7 +69,6 @@ void Level::GenerateChunk(int startX, int width) {
     for (int x = startX; x < startX + width; x += Constants::TerrainStep) {
         
         // Narrow the gap
-        // Narrow the gap
         if (currentGapHeight > Constants::Level::MinGapHeight) {
             currentGapHeight -= 0.05f; // Shrink slowly
         }
@@ -124,7 +123,8 @@ void Level::GenerateChunk(int startX, int width) {
             obstacles.push_back({(float)x, (float)floorY, (float)Constants::TerrainStep, (float)(Constants::ScreenHeight - floorY)});
         }
 
-        if (GetRandomValue(0, 100) < 2) { // 2% chance per step? steps are small.
+        // Spawn targets (2% chance per step)
+        if (GetRandomValue(0, 100) < 2) { 
              // ensure distance from last target
              bool canSpawn = true;
              if (!targets.empty()) {
@@ -179,6 +179,7 @@ bool Level::CheckCollision(Rectangle playerRect) {
 
     // Also check screen bounds if no obstacles generated there (e.g. initial gap)
     if (playerRect.y + playerRect.height > Constants::ScreenHeight) return true;
+    
     return false;
 }
 

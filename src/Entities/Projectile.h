@@ -4,7 +4,7 @@
 
 class Projectile {
 public:
-    Projectile(Vector2 startPos, Vector2 initialVelocity);
+    Projectile(Vector2 startPos, Vector2 initialVelocity, bool isMovingRight);
     
     void Update();
     void Draw() const;
@@ -17,5 +17,6 @@ private:
     Vector2 position;
     Vector2 velocity;
     bool active;
+    bool isMovingRight;
     float radius;
 };

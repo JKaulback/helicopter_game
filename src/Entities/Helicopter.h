@@ -12,6 +12,7 @@ public:
     Rectangle GetRect() const;
     bool HasStarted() const { return hasStarted; }
     Vector2 GetPosition() const { return position; }
+    bool IsFacingRight() const { return facingRight; }
 
 private:
     Vector2 position;

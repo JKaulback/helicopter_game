@@ -2,8 +2,8 @@
 
 using PhysConst = Constants::Physics;
 
-Projectile::Projectile(Vector2 startPos, Vector2 initialVelocity) 
-    : position(startPos), velocity(initialVelocity), active(true), radius(5.0f) {
+Projectile::Projectile(Vector2 startPos, Vector2 initialVelocity, bool isMovingRight) 
+    : position(startPos), velocity(initialVelocity), active(true), radius(5.0f), isMovingRight(isMovingRight) {
 }
 
 void Projectile::Update() {
@@ -13,7 +13,11 @@ void Projectile::Update() {
     velocity.y += PhysConst::ProjectileGravity; 
     
     // Apply velocity
-    position.x += velocity.x;
+    if (isMovingRight) {
+        position.x += velocity.x;
+    } else {
+        position.x -= velocity.x;
+    }
     position.y += velocity.y;
 
     // Out of bounds check (simple)
