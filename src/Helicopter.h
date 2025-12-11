@@ -23,4 +23,5 @@ private:
     const int height = 20;
     bool hasStarted;
     bool facingRight;
+    float animationTimer;
 };

@@ -19,6 +19,7 @@ public:
 private:
     void Update();
     void Draw();
+    void Reset();
 
     Helicopter helicopter;
     Level level;

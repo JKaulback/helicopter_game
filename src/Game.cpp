@@ -22,7 +22,6 @@ void Game::Init() {
     bgm = LoadMusicStream("assets/music.mp3");
     
     bgm.looping = true;
-    PlayMusicStream(bgm);
     
     // Initialize game objects here
     helicopter.Init({100, 330}); // Start position
@@ -58,23 +57,32 @@ void Game::Run() {
     Shutdown();
 }
 
+void Game::Reset() {
+    gameOver = false;
+    helicopter.Reset({100, 330});
+    level.Init();
+    missiles.clear();
+    spawnTimer = 0.0f;
+    currentAmmo = maxAmmo;
+    ammoRechargeTimer = 0.0f;
+}
+
 void Game::Update() {
-    UpdateMusicStream(bgm);
+    // Music Control
+    if (helicopter.HasStarted() && !gameOver) {
+        if (!IsMusicStreamPlaying(bgm)) PlayMusicStream(bgm);
+        UpdateMusicStream(bgm);
+    } else {
+        if (IsMusicStreamPlaying(bgm)) StopMusicStream(bgm);
+    }
 
     if (gameOver) {
         if (IsKeyPressed(KEY_R)) {
-            gameOver = false;
-            helicopter.Reset({100, 330});
-            level.Init();
-            missiles.clear();
-            spawnTimer = 0.0f;
-            currentAmmo = maxAmmo;
+            Reset();
         }
         return;
     }
-
-    if (victory) return;
-
+    
     helicopter.Update();
     if (helicopter.HasStarted()) {
         level.Update(); // Scroll terrain

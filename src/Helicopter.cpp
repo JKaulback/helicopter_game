@@ -69,6 +69,7 @@ void Helicopter::Reset(Vector2 startPos) {
     velocity = {0, 0};
     hasStarted = false;
     facingRight = true;
+    animationTimer = 0.0f;
 }
 
 void Helicopter::Update() {
@@ -91,6 +92,9 @@ void Helicopter::Update() {
     }
 
     if (inputGiven) hasStarted = true;
+    
+    if (hasStarted) animationTimer += GetFrameTime();
+
     if (!hasStarted) return;
 
     // Apply gravity
@@ -125,7 +129,10 @@ void Helicopter::Draw() {
             // Animate Main Rotor (change width)
             // Use sin(time * speed) to oscillate width
             float speed = 20.0f;
-            float scale = sinf((float)GetTime() * speed); 
+            float scale = 1.0f;
+            if (hasStarted) {
+                scale = sinf(animationTimer * speed); 
+            }
             // We want it to look like it's spinning, so width goes from full to near 0 and back
             // Actually, a simple scale factor on width works best for 2D rotation illusion
             
@@ -141,7 +148,7 @@ void Helicopter::Draw() {
         else if (shape.id == TAIL_ROTOR) {
             // Animate Tail Rotor using built-in rotation
             float speed = 800.0f; // Degrees per second
-            float angle = fmod((float)GetTime() * speed, 360.0f);
+            float angle = fmod(animationTimer * speed, 360.0f);
 
             shapeToDraw.rotation = angle;
             shapeToDraw.Draw(position);

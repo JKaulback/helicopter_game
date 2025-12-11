@@ -58,8 +58,9 @@ void Level::GenerateChunk(int startX, int width) {
     for (int x = startX; x < startX + width; x += Constants::TerrainStep) {
         
         // Narrow the gap
-        currentGapHeight -= 0.05f; // Shrink slowly
-        if (currentGapHeight < 100.0f) currentGapHeight = 100.0f;
+        if (currentGapHeight > 100.0f) {
+            currentGapHeight -= 0.05f; // Shrink slowly
+        }
 
         // Target Logic
         stepsToTarget--;
