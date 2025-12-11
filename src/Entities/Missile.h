@@ -27,6 +27,12 @@ protected:
     int height = 10;
 };
 
+class StandardMissile : public Missile {
+public:
+    StandardMissile(Vector2 startPos);
+    void Update(Vector2 playerPos) override;
+};
+
 class OscillatorMissile : public Missile {
 public:
     OscillatorMissile(Vector2 startPos);

@@ -53,6 +53,18 @@ Rectangle Missile::GetRect() const {
     return {position.x, position.y, (float)width + 10.0f, (float)height};
 }
 
+// --- Standard Missile ---
+StandardMissile::StandardMissile(Vector2 startPos) : Missile(startPos, GREEN) {
+    rotation = 180.0f;
+}
+
+void StandardMissile::Update(Vector2 playerPos) {
+    Missile::Update(playerPos);
+    if (!active) return;
+
+    position.x -= speed;
+}
+
 // --- Oscillator Missile ---
 OscillatorMissile::OscillatorMissile(Vector2 startPos) : Missile(startPos, RED) {
     amplitude = (float)GetRandomValue(40, 90);
