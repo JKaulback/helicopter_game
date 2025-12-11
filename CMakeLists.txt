@@ -19,6 +19,12 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
+target_include_directories(${PROJECT_NAME} PRIVATE 
+    src/Core 
+    src/Entities 
+    src/Level
+)
+
 target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
 
 if (WIN32)
