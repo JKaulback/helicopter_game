@@ -26,7 +26,14 @@ private:
         Rectangle weakSpot;
         bool active;
     };
+    
+    struct TriangleObstacle {
+        Vector2 p1, p2, p3;
+        bool active;
+    };
+    
     std::deque<Wall> walls;
+    std::deque<TriangleObstacle> triangleObstacles;
     std::deque<Rectangle> obstacles;
     Rectangle startPad;
     float distanceTraveled = 0.0f;

@@ -5,6 +5,7 @@
 void Level::Init() {
     obstacles.clear();
     walls.clear();
+    triangleObstacles.clear();
     levelTexts.clear();
     distanceTraveled = 0.0f;
     lastY = (Constants::ScreenHeight + Constants::ControlPanelHeight) / 2.0f;
@@ -69,6 +70,18 @@ void Level::Update() {
     // Cull off-screen walls
     while (!walls.empty() && walls.front().rect.x + walls.front().rect.width < 0) {
         walls.pop_front();
+    }
+    
+    // Scroll Triangles
+    for (auto& tri : triangleObstacles) {
+        tri.p1.x -= Constants::ScrollSpeed;
+        tri.p2.x -= Constants::ScrollSpeed;
+        tri.p3.x -= Constants::ScrollSpeed;
+    }
+    
+    // Cull off-screen triangles
+    while (!triangleObstacles.empty() && triangleObstacles.front().p3.x < 0) {
+        triangleObstacles.pop_front();
     }
 
     // Generate new obstacles if needed
@@ -141,11 +154,35 @@ void Level::GenerateChunk(int startX, int width) {
             obstacles.push_back({(float)x, (float)floorY, (float)Constants::TerrainStep, (float)(Constants::ScreenHeight - floorY)});
         }
         
-        // Skip wall spawn if distance traveled is less than 500
-        if (distanceTraveled < 500) continue;
-
+        // Random Stalactites/Stalagmites (Obstacles)
+        if (GetRandomValue(0, 25) == 0) {
+            bool onCeiling = GetRandomValue(0, 1) == 0;
+            float triH = (float)GetRandomValue(30, 80);
+            float triW = (float)GetRandomValue(15, 30);
+            
+            float centerX = (float)x + Constants::TerrainStep / 2.0f;
+            
+            if (onCeiling) {
+                 float base = (float)(ceilingY) - 15;
+                 triangleObstacles.push_back({
+                     {centerX - triW, base},
+                     {centerX, base + triH},
+                     {centerX + triW, base},
+                     true
+                 });
+            } else {
+                 float base = (float)(floorY) + 15;
+                 triangleObstacles.push_back({
+                     {centerX - triW, base},
+                     {centerX + triW, base},
+                     {centerX, base - triH},
+                     true
+                 });
+            }
+        }
+        
         // Spawn walls (2% chance per step)
-        if (GetRandomValue(0, 100) < 2) { 
+        if (distanceTraveled > 500 && GetRandomValue(0, 100) < 2) { 
              // ensure distance from last wall
              bool canSpawn = true;
              if (!walls.empty()) {
@@ -159,8 +196,8 @@ void Level::GenerateChunk(int startX, int width) {
                  float tY = 0.0f; 
                  
                  float wHeight = (float)Constants::Level::WeakSpotHeight;
-                 float gapTop = ceilingY;
-                 float gapHeight = (float)(floorY - ceilingY);
+                 float gapTop = ceilingY + 20;
+                 float gapHeight = (float)(floorY - ceilingY) - 40;
                  
                  float wY = (float)GetRandomValue((int)gapTop, (int)(gapTop + gapHeight - wHeight));
                  
@@ -186,6 +223,10 @@ void Level::Draw(const Font& font) {
     for (const auto& obs : obstacles) {
         DrawRectangleRec(obs, BROWN);
     }
+    
+    for (const auto& tri : triangleObstacles) {
+        DrawTriangle(tri.p1, tri.p2, tri.p3, BROWN);
+    }
 }
 
 bool Level::CheckCollision(Rectangle playerRect) {
@@ -193,6 +234,21 @@ bool Level::CheckCollision(Rectangle playerRect) {
     for (const auto& obs : obstacles) {
         if (CheckCollisionRecs(playerRect, obs)) {
             return true;
+        }
+    }
+    
+    for (const auto& tri : triangleObstacles) {
+        // Approximate collision (check player corners against triangle)
+        Vector2 tl = {playerRect.x, playerRect.y};
+        Vector2 tr = {playerRect.x + playerRect.width, playerRect.y};
+        Vector2 bl = {playerRect.x, playerRect.y + playerRect.height};
+        Vector2 br = {playerRect.x + playerRect.width, playerRect.y + playerRect.height};
+        
+        if (CheckCollisionPointTriangle(tl, tri.p1, tri.p2, tri.p3) ||
+            CheckCollisionPointTriangle(tr, tri.p1, tri.p2, tri.p3) ||
+            CheckCollisionPointTriangle(bl, tri.p1, tri.p2, tri.p3) ||
+            CheckCollisionPointTriangle(br, tri.p1, tri.p2, tri.p3)) {
+            return true;        
         }
     }
     

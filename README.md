@@ -11,6 +11,14 @@ A 2D side-scrolling helicopter game built with C++ and Raylib. Fly your helicopt
     *   **Ammo Management**: Limited ammo that recharges over time.
     *   **Projectiles**: Shoot to destroy walls and incoming enemies.
 
+### 🎨 Visuals
+*   **Atmospheric Shader**: Custom OpenGL shader applying vignette and cold color grading for a cavernous feel.
+*   **Parallax Background**: Procedurally generated background with multi-layered depth, featuring randomized cave formations.
+
+### ⚠️ Obstacles
+*   **Stalactites & Stalagmites**: Dangerous spikes protruding from the ceiling and floor.
+*   **Moving Walls**: Barriers with weak points that can be destroyed.
+
 ### 👾 Enemies
 *   **Rocks**: Destructible space debris drifting through the cavern.
 *   **Missiles**:
