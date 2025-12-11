@@ -48,12 +48,9 @@ private:
     std::vector<Projectile> projectiles;
 
     float spawnTimer = 0.0f;
-    
-    // Ammo System
-    int maxAmmo = 5;
+
     int currentAmmo = 5;
     float ammoRechargeTimer = 0.0f;
-    const float ammoRechargeDelay = 1.5f;
 
     bool gameOver;
     bool victory;

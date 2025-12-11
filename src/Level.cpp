@@ -38,7 +38,6 @@ void Level::Update() {
     
     distanceTraveled += Constants::ScrollSpeed;
 
-    // Cull off-screen obstacles (assuming they are sorted by X, and front is leftmost)
     while (!obstacles.empty() && obstacles.front().x + obstacles.front().width < 0) {
         obstacles.pop_front();
     }
@@ -70,7 +69,8 @@ void Level::GenerateChunk(int startX, int width) {
     for (int x = startX; x < startX + width; x += Constants::TerrainStep) {
         
         // Narrow the gap
-        if (currentGapHeight > 100.0f) {
+        // Narrow the gap
+        if (currentGapHeight > Constants::Level::MinGapHeight) {
             currentGapHeight -= 0.05f; // Shrink slowly
         }
 
@@ -131,15 +131,17 @@ void Level::GenerateChunk(int startX, int width) {
                  if (x - targets.back().rect.x < 400) canSpawn = false; 
              }
              
-             if (canSpawn && (floorY - ceilingY) > 60) { // Enough space
-                 float tWidth = 30.0f;
-                 float tHeight = (float)(floorY - ceilingY);
+             if (canSpawn && (floorY - ceilingY) > Constants::Level::MinGapHeight * 0.6f) {
+                 float tWidth = (float)Constants::Level::TargetWidth;
+                 float tHeight = (float)Constants::ScreenHeight;
                  float tX = (float)x;
-                 float tY = (float)ceilingY;
+                 float tY = 0.0f; 
                  
-                 // Weak spot
-                 float wHeight = 30.0f;
-                 float wY = (float)GetRandomValue((int)tY, (int)(tY + tHeight - wHeight));
+                 float wHeight = (float)Constants::Level::WeakSpotHeight;
+                 float gapTop = ceilingY;
+                 float gapHeight = (float)(floorY - ceilingY);
+                 
+                 float wY = (float)GetRandomValue((int)gapTop, (int)(gapTop + gapHeight - wHeight));
                  
                  targets.push_back({{tX, tY, tWidth, tHeight}, {tX, wY, tWidth, wHeight}, true});
              }
@@ -149,14 +151,15 @@ void Level::GenerateChunk(int startX, int width) {
 
 void Level::Draw() {
     DrawRectangleRec(startPad, GRAY);
-    for (const auto& obs : obstacles) {
-        DrawRectangleRec(obs, MAROON);
-    }
     
     for (const auto& target : targets) {
         if (!target.active) continue;
-        DrawRectangleRec(target.rect, GRAY);
+        DrawRectangleRec(target.rect, LIGHTGRAY);
         DrawRectangleRec(target.weakSpot, GREEN);
+    }
+
+    for (const auto& obs : obstacles) {
+        DrawRectangleRec(obs, MAROON);
     }
 }
 

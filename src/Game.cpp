@@ -2,6 +2,12 @@
 #include <ctime>
 #include <cstdio>
 
+using HeliConst = Constants::Helicopter;
+using GameConst = Constants::Game;
+using PhysConst = Constants::Physics;
+using LevelConst = Constants::Level;
+using GameFont = Constants::gameFont;
+
 Game::Game() : gameOver(false), victory(false) {}
 
 Game::~Game() {
@@ -20,11 +26,9 @@ void Game::Init() {
     shootSound = LoadSound("assets/shoot.wav");
     explodeSound = LoadSound("assets/explode.wav");
     bgm = LoadMusicStream("assets/music.mp3");
-    
     bgm.looping = true;
     
-    // Initialize game objects here
-    helicopter.Init({100, 330}); // Start position
+    helicopter.Init(HeliConst::StartPos); 
     level.Init();
 
     missiles.clear();
@@ -32,7 +36,7 @@ void Game::Init() {
     projectiles.clear();
     spawnTimer = 0.0f;
     
-    currentAmmo = maxAmmo;
+    currentAmmo = GameConst::MaxAmmo;
     ammoRechargeTimer = 0.0f;
 
     gameFont = LoadFont("assets/arial.ttf");
@@ -59,11 +63,11 @@ void Game::Run() {
 
 void Game::Reset() {
     gameOver = false;
-    helicopter.Reset({100, 330});
+    helicopter.Reset(HeliConst::StartPos);
     level.Init();
     missiles.clear();
     spawnTimer = 0.0f;
-    currentAmmo = maxAmmo;
+    currentAmmo = GameConst::MaxAmmo;
     ammoRechargeTimer = 0.0f;
 }
 
@@ -84,12 +88,13 @@ void Game::Update() {
     }
     
     helicopter.Update();
+
     if (helicopter.HasStarted()) {
-        level.Update(); // Scroll terrain
+        level.Update(); // Update terrain
         
         // Spawn Missiles
         spawnTimer += GetFrameTime();
-        if (spawnTimer > 3.0f) { // Spawn every 3 seconds for now
+        if (spawnTimer > 3.0f) { // Spawn every 3 seconds
             spawnTimer = 0.0f;
             
             int r = GetRandomValue(0, 2);
@@ -110,30 +115,31 @@ void Game::Update() {
     if (IsKeyPressed(KEY_SPACE) && currentAmmo > 0) {
         Vector2 heliPos = helicopter.GetPosition();
         // Spawn at nose (Width 40, Height 20 -> Center Right ~ 40, 10)
-        projectiles.push_back({ {heliPos.x + 40, heliPos.y + 10}, {12.0f, 0.0f} });
+        projectiles.push_back({ {heliPos.x + HeliConst::Width, heliPos.y + HeliConst::Height / 2.0f}, {PhysConst::ProjectileSpeed, 0.0f} });
         currentAmmo--;
         PlaySound(shootSound);
     }
     
     // Ammo Recharge
-    if (currentAmmo < maxAmmo) {
+    if (currentAmmo < GameConst::MaxAmmo) {
         ammoRechargeTimer += GetFrameTime();
-        if (ammoRechargeTimer >= ammoRechargeDelay) {
+        if (ammoRechargeTimer >= GameConst::AmmoRechargeDelay) {
             currentAmmo++;
             ammoRechargeTimer = 0.0f;
         }
     }
 
-    // --- PHASE 1: Projectile Physics & Wall Collision ---
     for (auto& p : projectiles) {
         if (!p.active) continue;
 
         // Physics
-        p.velocity.y += 0.08f; 
+        // Physics
+        p.velocity.y += PhysConst::ProjectileGravity; 
         p.position.x += p.velocity.x;
         p.position.y += p.velocity.y;
 
-        // Wall Collision
+        p.position.y += p.velocity.y;
+
         if (level.CheckProjectileCollision(p.GetRect())) {
             p.active = false;
             explosions.push_back({ {p.position.x, p.position.y}, 0.5f });
@@ -146,26 +152,17 @@ void Game::Update() {
         }
     }
 
-    // --- PHASE 2: Missile Physics & Wall Collision ---
     for (auto& m : missiles) {
         if (!m->IsActive()) continue;
 
         m->Update(helicopter.GetPosition());
 
-        // Wall Collision
         if (m->IsActive() && level.CheckCollision(m->GetRect())) {
             m->Destroy();
             explosions.push_back({ {m->GetRect().x + 15, m->GetRect().y + 5}, 0.5f });
             PlaySound(explodeSound);
         }
-    }
-
-    // --- PHASE 3: Entity-Entity Collisions ---
-    
-    // Missile vs Projectile
-    for (auto& m : missiles) {
-        if (!m->IsActive()) continue;
-
+        
         for (auto& p : projectiles) {
             if (!p.active) continue;
 
@@ -181,19 +178,12 @@ void Game::Update() {
                 break; // Missile handled, move to next missile
             }
         }
-    }
 
-    // Missile vs Player
-    for (auto& m : missiles) {
-        if (!m->IsActive()) continue;
         if (CheckCollisionRecs(helicopter.GetRect(), m->GetRect())) {
             gameOver = true;
         }
     }
 
-    // --- PHASE 4: Cleanup ---
-    
-    // Remove inactive projectiles
     auto pIt = projectiles.begin();
     while (pIt != projectiles.end()) {
         if (!pIt->active) {
@@ -264,7 +254,7 @@ void Game::Draw() {
 
     // Draw Ammo
     char ammoText[50];
-    sprintf(ammoText, "Ammo: %d / %d", currentAmmo, maxAmmo);
+    sprintf(ammoText, "Ammo: %d / %d", currentAmmo, GameConst::MaxAmmo);
     Color ammoColor = (currentAmmo == 0) ? RED : GREEN;
     DrawTextEx(gameFont, ammoText, Vector2{200.0f, 15.0f}, 20, 1, ammoColor);
 

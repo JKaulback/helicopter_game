@@ -16,11 +16,6 @@ public:
 private:
     Vector2 position;
     Vector2 velocity;
-    const float gravity = 0.2f;
-    const float thrust = 0.4f;
-    const float maxSpeed = 5.0f;
-    const int width = 40;
-    const int height = 20;
     bool hasStarted;
     bool facingRight;
     float animationTimer;
